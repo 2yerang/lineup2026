@@ -98,6 +98,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .show-bar{position:absolute;border-radius:4px;display:flex;align-items:center;padding:0 5px;cursor:pointer;overflow:hidden;font-size:10px;font-weight:700;white-space:nowrap;user-select:none;transition:filter .12s,transform .12s;letter-spacing:-.2px;}
 .show-bar:hover{filter:brightness(1.2);transform:scaleY(1.08);z-index:5;}
 .show-bar.es{box-shadow:0 0 0 1.5px rgba(255,160,50,.85);}
+.show-bar.vb{opacity:0.45;}
 #today-line{position:absolute;top:0;bottom:0;width:2px;background:var(--today);z-index:6;pointer-events:none;box-shadow:0 0 6px rgba(255,95,95,.5);}
 #today-pill{position:absolute;top:4px;background:var(--today);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:10px;white-space:nowrap;pointer-events:none;z-index:7;transform:translateX(-50%);}
 
@@ -609,6 +610,7 @@ function render(){
   const fl=SHOWS.filter(s=>{if(reg&&s.region!==reg)return false;if(q&&!(s.name+s.facility+s.hall).toLowerCase().includes(q))return false;return true;});
   const vm=new Map();fl.forEach(s=>{const k=s.facility+'\x00'+s.hall;if(!vm.has(k))vm.set(k,{d:vd(s.facility,s.hall),fac:s.facility,hall:s.hall,shows:[]});vm.get(k).shows.push(s);});
   const favs=getFavs();
+  const viewedMap=gv();
   const venues=[...vm.values()].sort((a,b)=>{
     const af=favs.has(a.fac+'\x00'+a.hall),bf=favs.has(b.fac+'\x00'+b.hall);
     if(af!==bf)return af?-1:1;return a.d<b.d?-1:1;
@@ -634,7 +636,8 @@ function render(){
     shows.forEach(s=>{
       const sd=pi(s.start),ed=pi(s.end);if(!sd||!ed)return;
       const sx=dof(sd)*dpx,ex=(dof(ed)+1)*dpx,w=Math.max(4,ex-sx),y=5+s._l*28,h=25;
-      const bar=document.createElement('div');bar.className='show-bar'+(es(s)?' es':'');
+      const viewed=!!viewedMap[sk(s)];
+      const bar=document.createElement('div');bar.className='show-bar'+(es(s)?' es':'')+(viewed?' vb':'');
       bar.style.cssText=`left:${sx}px;top:${y}px;width:${w}px;height:${h}px;background:${bc(s)};color:${btc(s)}`;
       if(w>=24)bar.textContent=s.name;bar.title=s.name+' ('+fd(s.start)+'~'+fd(s.end)+')';
       bar.addEventListener('click',()=>openModal(s));gr2.appendChild(bar);
@@ -666,7 +669,7 @@ function renderList(){
       <td class="col-venue">${vd(s.facility,s.hall)}</td>
       <td style="font-size:12px;color:var(--text2)">${s.region||'-'}</td>
       <td><div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div><div class="col-dur">${d}일</div></td>`;
-    tr.querySelector('.vbtn').addEventListener('click',e=>{e.stopPropagation();tv(s);renderList();});
+    tr.querySelector('.vbtn').addEventListener('click',e=>{e.stopPropagation();tv(s);updECnt();renderList();});
     tr.querySelector('.wbtn').addEventListener('click',e=>{e.stopPropagation();toggleWish(s);renderList();});
     tr.addEventListener('click',e=>{if(e.target.closest('.vbtn,.wbtn'))return;openModal(s);});
     tb.appendChild(tr);
@@ -757,7 +760,7 @@ function updModal(s){
     wrap.appendChild(p);
   });
 }
-document.getElementById('mstar').addEventListener('click',()=>{if(!curShow)return;tv(curShow);updModal(curShow);if(curTab==='list')renderList();});
+document.getElementById('mstar').addEventListener('click',()=>{if(!curShow)return;tv(curShow);updModal(curShow);updECnt();if(curTab==='gantt')render();if(curTab==='list')renderList();});
 document.getElementById('mwish').addEventListener('click',()=>{if(!curShow)return;toggleWish(curShow);updModal(curShow);if(curTab==='list')renderList();});
 document.getElementById('madd').addEventListener('click',()=>{if(!curShow)return;openAR(curShow);});
 document.getElementById('mcls').addEventListener('click',()=>ov.classList.remove('open'));
@@ -786,6 +789,8 @@ document.getElementById('arsave').addEventListener('click',()=>{
   const date=document.getElementById('ardate').value;if(!date){alert('관람일을 입력해주세요.');return;}
   addRec(arTarget,date,pendPhoto);document.getElementById('aro').classList.remove('open');
   if(ov.classList.contains('open')&&curShow&&sk(curShow)===sk(arTarget))updModal(arTarget);
+  updECnt();
+  if(curTab==='gantt')render();
   if(curTab==='list')renderList();
   renderRecord();
 });
@@ -807,21 +812,32 @@ async function compImg(file){
 // Ending modal
 document.getElementById('ending-btn').addEventListener('click',openEnding);
 function openEnding(){
-  const shows=SHOWS.filter(s=>gst(s)==='ongoing').map(s=>({...s,dlo:dl(s)})).sort((a,b)=>a.dlo-b.dlo);
-  document.getElementById('esub').textContent=`공연중 ${shows.length}개 (종료 임박순)`;
+  const all=SHOWS.filter(s=>gst(s)==='ongoing').map(s=>({...s,dlo:dl(s)})).sort((a,b)=>a.dlo-b.dlo);
+  const unseen=all.filter(s=>!iv(s));
+  const seen=all.filter(s=>iv(s));
+  document.getElementById('esub').textContent=`공연중 ${all.length}개 · 미관람 ${unseen.length}개`;
   const list=document.getElementById('elist');list.innerHTML='';
-  shows.forEach(s=>{
+  const addItem=(s,dim)=>{
     const item=document.createElement('div');item.className='eitem';
+    if(dim)item.style.opacity='.45';
     const cls=s.dlo<=7?'dr':s.dlo<=14?'do':'dg';
-    item.innerHTML=`<span class="edays ${cls}">D-${s.dlo}</span><div style="flex:1;overflow:hidden"><div class="ename">${s.name}</div><div class="evenue">${vd(s.facility,s.hall)} · ${s.region}</div></div><div class="edate2">${fd(s.end)}</div>`;
+    item.innerHTML=`<span class="edays ${cls}">D-${s.dlo}</span><div style="flex:1;overflow:hidden"><div class="ename">${dim?'✓ ':''}${s.name}</div><div class="evenue">${vd(s.facility,s.hall)} · ${s.region}</div></div><div class="edate2">${fd(s.end)}</div>`;
     item.addEventListener('click',()=>{document.getElementById('eo').classList.remove('open');openModal(s);});
     list.appendChild(item);
-  });
+  };
+  unseen.forEach(s=>addItem(s,false));
+  if(seen.length){
+    const sep=document.createElement('div');
+    sep.style.cssText='padding:8px 4px 6px;font-size:11px;color:var(--text3);border-top:1px solid var(--border);margin-top:4px;';
+    sep.textContent=`✓ 관람 완료 ${seen.length}개`;
+    list.appendChild(sep);
+    seen.forEach(s=>addItem(s,true));
+  }
   document.getElementById('eo').classList.add('open');
 }
 document.getElementById('ecls').addEventListener('click',()=>document.getElementById('eo').classList.remove('open'));
 document.getElementById('eo').addEventListener('click',e=>{if(e.target===document.getElementById('eo'))document.getElementById('eo').classList.remove('open');});
-function updECnt(){document.getElementById('ecnt').textContent=SHOWS.filter(s=>gst(s)==='ongoing'&&dl(s)<=14).length;}
+function updECnt(){document.getElementById('ecnt').textContent=SHOWS.filter(s=>gst(s)==='ongoing'&&dl(s)<=14&&!iv(s)).length;}
 
 // Photo viewer
 function showPhoto(du){document.getElementById('pimg').src=du;document.getElementById('po').classList.add('open');}
