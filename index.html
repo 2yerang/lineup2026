@@ -225,9 +225,11 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 #settings-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;display:flex;flex-direction:column;gap:12px;}
 .st-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;}
 .st-section h3{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;}
-.st-stat{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
-.st-stat:last-child{border-bottom:none;}
-.st-stat-val{font-weight:700;color:var(--accent);}
+.st-stat-grid{display:flex;gap:1px;background:var(--border);border-radius:10px;overflow:hidden;}
+.st-stat-col{flex:1;background:var(--bg3);padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.st-stat-lbl{font-size:11px;color:var(--text2);text-align:center;white-space:nowrap;}
+.st-stat-num{font-size:22px;font-weight:700;color:var(--accent);line-height:1;}
+.st-stat-unit{font-size:12px;font-weight:600;color:var(--text2);margin-left:2px;}
 .st-note{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;}
 .st-warn{font-size:11px;color:#ffa030;margin-top:10px;line-height:1.5;}
 .st-btns{display:flex;gap:10px;flex-wrap:wrap;}
@@ -844,15 +846,15 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 
 // Settings
 function renderSettings(){
-  const viewed=gv(),recs=gr(),favs=getFavs();
+  const viewed=gv(),recs=gr();
   const viewedCnt=Object.keys(viewed).length;
-  let showCnt=0,recCnt=0,photoCnt=0;
-  Object.values(recs).forEach(arr=>{if(arr&&arr.length){showCnt++;recCnt+=arr.length;photoCnt+=arr.filter(e=>e.photo).length;}});
+  let recCnt=0;
+  Object.values(recs).forEach(arr=>{if(arr&&arr.length)recCnt+=arr.length;});
   document.getElementById('st-stats').innerHTML=`
-    <div class="st-stat"><span>관람 체크 공연</span><span class="st-stat-val">${viewedCnt}개</span></div>
-    <div class="st-stat"><span>관람 기록</span><span class="st-stat-val">${showCnt}개 공연 / 총 ${recCnt}회</span></div>
-    <div class="st-stat"><span>첨부 사진</span><span class="st-stat-val">${photoCnt}장</span></div>
-    <div class="st-stat"><span>즐겨찾기 공연장</span><span class="st-stat-val">${favs.size}개</span></div>`;
+    <div class="st-stat-grid">
+      <div class="st-stat-col"><div class="st-stat-lbl">관람체크공연</div><div class="st-stat-num">${viewedCnt}<span class="st-stat-unit">개</span></div></div>
+      <div class="st-stat-col"><div class="st-stat-lbl">관람기록</div><div class="st-stat-num">${recCnt}<span class="st-stat-unit">회</span></div></div>
+    </div>`;
 }
 document.getElementById('st-export').addEventListener('click',()=>{
   const data={version:'1',exportedAt:TI,viewed:gv(),records:gr(),fav_venues:[...getFavs()]};
