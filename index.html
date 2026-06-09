@@ -112,6 +112,10 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .ndot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .ntext{font-size:13px;font-weight:600;color:var(--text1);}
 .ebadge{display:inline-block;padding:2px 7px;border-radius:10px;flex-shrink:0;font-size:10px;font-weight:700;background:rgba(255,160,50,.18);color:#ffa030;}
+.gift-badge{display:inline-block;padding:1px 5px;border-radius:8px;font-size:10px;font-weight:700;background:rgba(80,168,112,.18);color:#3a9960;margin-left:4px;flex-shrink:0;}
+.gift-cnt{font-size:11px;color:#3a9960;margin-left:3px;}
+#gfav-f{padding:4px 8px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;white-space:nowrap;}
+#gfav-f.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 .col-venue{font-size:12px;color:var(--text2);}
 .col-dates{font-size:12px;color:var(--text2);white-space:nowrap;}
 .col-dur{font-size:11px;color:var(--text3);margin-top:2px;}
@@ -276,6 +280,9 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
   <div id="hdr-right">
     <div id="gc" class="ctrl-grp">
       <select id="rg"><option value="">전체 지역</option></select>
+      <select id="gst-f"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
+      <select id="gvw-f"><option value="">관람 전체</option><option value="unviewed">미관람</option><option value="viewed">관람</option><option value="wish">위시리스트</option></select>
+      <button id="gfav-f">★ 즐찾만</button>
       <input type="search" id="sg" placeholder="공연명 · 극장" autocomplete="off" spellcheck="false">
       <div id="zoom-wrap">
         <div id="zoom-ctrl">
@@ -299,7 +306,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <button id="csv-btn" class="act-btn">CSV 다운로드</button>
       <button id="zip-btn" class="act-btn">ZIP 다운로드</button>
     </div>
-    <button id="ending-btn">⏰ <span id="ecnt">0</span></button>
+    <button id="ending-btn">⏰ <span id="ecnt"></span></button>
     <span id="count-badge"></span>
   </div>
 </div>
@@ -414,7 +421,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <div class="mrow">
         <span class="mlbl">관람</span>
         <span class="mval">
-          <button id="mstar">☆ 미관람</button>
+          <button id="mstar">○ 미관람</button>
           <button id="mwish">♡ 위시리스트</button>
           <div id="mrecdates"></div>
         </span>
@@ -433,6 +440,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
     <h3>관람 기록 추가</h3>
     <div id="armshow"></div>
     <div class="aff-row"><label class="afl" for="ardate">관람일</label><input type="date" id="ardate"></div>
+    <div class="aff-row"><label class="afl">나눔표</label><label style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text2)"><input type="checkbox" id="argift"> 다른 사람 대신 예매한 표</label></div>
     <div class="aff">
       <label class="afl">티켓 사진 (선택)</label>
       <div class="pzone" id="pzone">📷 사진 선택 또는 촬영</div>
@@ -503,8 +511,8 @@ function tv(s){setv(s,!iv(s));}
 function gr(){try{return JSON.parse(localStorage.getItem(RK)||'{}')}catch{return{}}}
 function sr(r){localStorage.setItem(RK,JSON.stringify(r));}
 function gsr(s){return gr()[sk(s)]||[];}
-function addRec(s,date,photo){const r=gr(),k=sk(s);if(!r[k])r[k]=[];r[k].push({id:(Date.now()).toString(36)+Math.random().toString(36).slice(2),date,photo:photo||null});sr(r);setv(s,true);}
-function delRec(s,id){const r=gr(),k=sk(s);if(!r[k])return;r[k]=r[k].filter(e=>e.id!==id);if(!r[k].length){delete r[k];setv(s,false);}sr(r);}
+function addRec(s,date,photo,gift){const r=gr(),k=sk(s);if(!r[k])r[k]=[];r[k].push({id:(Date.now()).toString(36)+Math.random().toString(36).slice(2),date,photo:photo||null,gift:!!gift});sr(r);if(!gift)setv(s,true);}
+function delRec(s,id){const r=gr(),k=sk(s);if(!r[k])return;r[k]=r[k].filter(e=>e.id!==id);const hasReal=r[k].some(e=>!e.gift);if(!hasReal)setv(s,false);if(!r[k].length)delete r[k];sr(r);}
 
 // Populate regions
 const REGS=[...new Set(SHOWS.map(s=>s.region).filter(Boolean))].sort();
@@ -613,11 +621,15 @@ vlist.addEventListener('scroll',()=>{if(syncLock)return;syncLock=true;gscroll.sc
 function render(){
   const tot=TOTAL_DAYS*dpx;
   const reg=document.getElementById('rg').value,q=document.getElementById('sg').value.trim().toLowerCase();
-  const fl=SHOWS.filter(s=>{if(reg&&s.region!==reg)return false;if(q&&!(s.name+s.facility+s.hall).toLowerCase().includes(q))return false;return true;});
+  const fGst=document.getElementById('gst-f').value,fVw=document.getElementById('gvw-f').value;
+  const fFav=document.getElementById('gfav-f').classList.contains('on');
+  const fl=SHOWS.filter(s=>{if(reg&&s.region!==reg)return false;if(q&&!(s.name+s.facility+s.hall).toLowerCase().includes(q))return false;if(fGst&&gst(s)!==fGst)return false;if(fVw==='viewed'&&!iv(s))return false;if(fVw==='unviewed'&&iv(s))return false;if(fVw==='wish'&&!isWish(s))return false;return true;});
   const vm=new Map();fl.forEach(s=>{const k=s.facility+'\x00'+s.hall;if(!vm.has(k))vm.set(k,{d:vd(s.facility,s.hall),fac:s.facility,hall:s.hall,shows:[]});vm.get(k).shows.push(s);});
   const favs=getFavs();
   const viewedMap=gv();
-  const venues=[...vm.values()].sort((a,b)=>{
+  let venues=[...vm.values()];
+  if(fFav)venues=venues.filter(v=>favs.has(v.fac+'\x00'+v.hall));
+  venues.sort((a,b)=>{
     const af=favs.has(a.fac+'\x00'+a.hall),bf=favs.has(b.fac+'\x00'+b.hall);
     if(af!==bf)return af?-1:1;return a.d<b.d?-1:1;
   });
@@ -669,7 +681,7 @@ function renderList(){
   fl.forEach(s=>{
     const status=gst(s),soon=es(s),viewed=iv(s),wish=isWish(s),recs=gsr(s),rcnt=recs.length,d=dur(s),dl2=dl(s);
     const tr=document.createElement('tr');tr.className='list-row';
-    tr.innerHTML=`<td><div class="vcell"><button class="vbtn${viewed?' on':''}">${viewed?'★':'☆'}</button><button class="wbtn${wish?' on':''}">${wish?'♥':'♡'}</button>${rcnt>0?`<span class="rpill">${rcnt}</span>`:''}</div></td>
+    tr.innerHTML=`<td><div class="vcell"><button class="vbtn${viewed?' on':''}">${viewed?'✓':'○'}</button><button class="wbtn${wish?' on':''}">${wish?'♥':'♡'}</button>${rcnt>0?`<span class="rpill">${rcnt}</span>`:''}</div></td>
       <td><div class="cell-name"><div class="ndot" style="background:${bc(s)}"></div><span class="ntext">${s.name}</span>${soon?`<span class="ebadge">D-${dl2}</span>`:''}</div></td>
       <td><span class="sbadge ${status}">${SL[status]}</span></td>
       <td class="col-venue">${vd(s.facility,s.hall)}</td>
@@ -696,7 +708,9 @@ function renderRecord(){
   keys.forEach(k=>{
     const s=SM[k];if(!s)return;
     const entries=(allR[k]||[]).sort((a,b)=>a.date.localeCompare(b.date));
-    const repDate=getRepDate(entries);
+    const realEntries=entries.filter(e=>!e.gift);
+    const giftEntries=entries.filter(e=>e.gift);
+    const repDate=getRepDate(realEntries.length?realEntries:entries);
     // Main row
     const tr=document.createElement('tr');tr.className='rec-row';
     // 공연명
@@ -711,7 +725,7 @@ function renderRecord(){
     tdPeriod.innerHTML=`<div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div>`;tr.appendChild(tdPeriod);
     // 관람 (횟수만, 사진수 없음)
     const tdCnt=document.createElement('td');
-    tdCnt.innerHTML=`<span class="rcnt">${entries.length}회</span>`;tr.appendChild(tdCnt);
+    tdCnt.innerHTML=`<span class="rcnt">${realEntries.length}회</span>${giftEntries.length?`<span class="gift-cnt">+나눔${giftEntries.length}</span>`:''}`;tr.appendChild(tdCnt);
     // 관람일 (대표 날짜)
     const tdDates=document.createElement('td');
     tdDates.innerHTML=`<span style="font-size:12px;color:var(--text2)">${fd(repDate)||'-'}</span>`;
@@ -729,7 +743,7 @@ function renderRecord(){
     const inner=document.createElement('div');inner.className='rec-entries-inner';
     entries.forEach(e=>{
       const row=document.createElement('div');row.className='rentry';
-      row.innerHTML=`<span class="edate">${fd(e.date)}${e.photo?' 📷':''}</span>`;
+      row.innerHTML=`<span class="edate">${fd(e.date)}${e.gift?'<span class="gift-badge">나눔</span>':''}${e.photo?' 📷':''}</span>`;
       if(e.photo){const pb=document.createElement('button');pb.className='ephoto';pb.title='사진 보기';pb.textContent='🖼';pb.addEventListener('click',()=>showPhoto(e.photo.dataUrl));row.appendChild(pb);}
       const db=document.createElement('button');db.className='edel';db.title='삭제';db.textContent='✕';
       db.addEventListener('click',()=>{if(!confirm('이 관람 기록을 삭제하시겠습니까?'))return;delRec(s,e.id);updECnt();renderRecord();if(ov.classList.contains('open')&&curShow&&sk(curShow)===sk(s))updModal(s);});
@@ -755,13 +769,13 @@ function openModal(s){
 }
 function updModal(s){
   const viewed=iv(s);const star=document.getElementById('mstar');
-  star.className=viewed?'on':'';star.textContent=viewed?'★ 관람':'☆ 미관람';
+  star.className=viewed?'on':'';star.textContent=viewed?'✓ 관람':'○ 미관람';
   const wish=isWish(s);const mw=document.getElementById('mwish');
   mw.className=wish?'on':'';mw.textContent=wish?'♥ 위시리스트':'♡ 위시리스트';
   const recs=gsr(s),wrap=document.getElementById('mrecdates');wrap.innerHTML='';
   recs.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
     const p=document.createElement('span');p.className='mdrec'+(e.photo?' hp':'');
-    p.textContent=(e.photo?'📷 ':'')+fd(e.date);
+    p.innerHTML=(e.photo?'📷 ':'')+fd(e.date)+(e.gift?'<span class="gift-badge">나눔</span>':'');
     if(e.photo)p.addEventListener('click',()=>showPhoto(e.photo.dataUrl));
     wrap.appendChild(p);
   });
@@ -781,6 +795,7 @@ function openAR(s){
   document.getElementById('arfile').value='';
   document.getElementById('pzone').textContent='📷 사진 선택 또는 촬영';
   document.getElementById('pzone').classList.remove('filled');
+  document.getElementById('argift').checked=false;
   document.getElementById('aro').classList.add('open');
 }
 document.getElementById('pzone').addEventListener('click',()=>document.getElementById('arfile').click());
@@ -793,7 +808,8 @@ document.getElementById('arfile').addEventListener('change',async function(){
 document.getElementById('arcancel').addEventListener('click',()=>document.getElementById('aro').classList.remove('open'));
 document.getElementById('arsave').addEventListener('click',()=>{
   const date=document.getElementById('ardate').value;if(!date){alert('관람일을 입력해주세요.');return;}
-  addRec(arTarget,date,pendPhoto);document.getElementById('aro').classList.remove('open');
+  const gift=document.getElementById('argift').checked;
+  addRec(arTarget,date,pendPhoto,gift);document.getElementById('aro').classList.remove('open');
   if(ov.classList.contains('open')&&curShow&&sk(curShow)===sk(arTarget))updModal(arTarget);
   updECnt();
   if(curTab==='gantt')render();
@@ -819,13 +835,16 @@ async function compImg(file){
 document.getElementById('ending-btn').addEventListener('click',openEnding);
 function openEnding(){
   const all=SHOWS.filter(s=>gst(s)==='ongoing').map(s=>({...s,dlo:dl(s)})).sort((a,b)=>a.dlo-b.dlo);
-  document.getElementById('esub').textContent=`공연중 ${all.length}개 (종료 임박순)`;
+  const ending=all.filter(s=>s.dlo<=14&&!iv(s));
+  const wishCnt=ending.filter(s=>isWish(s)).length;
+  document.getElementById('esub').textContent=`공연중 ${all.length}개 · 임박 ${ending.length}건${wishCnt?` (위시 ${wishCnt}건)`:''}`;
   const list=document.getElementById('elist');list.innerHTML='';
   all.forEach(s=>{
     const item=document.createElement('div');item.className='eitem';
     if(iv(s))item.style.opacity='.45';
     const cls=s.dlo<=7?'dr':s.dlo<=14?'do':'dg';
-    item.innerHTML=`<span class="edays ${cls}">D-${s.dlo}</span><div style="flex:1;overflow:hidden"><div class="ename">${s.name}</div><div class="evenue">${vd(s.facility,s.hall)} · ${s.region}</div></div><div class="edate2">${fd(s.end)}</div>`;
+    const wTag=isWish(s)?`<span style="color:#f47080;margin-right:3px;font-size:11px">♥</span>`:'';
+    item.innerHTML=`<span class="edays ${cls}">D-${s.dlo}</span><div style="flex:1;overflow:hidden"><div class="ename">${wTag}${s.name}</div><div class="evenue">${vd(s.facility,s.hall)} · ${s.region}</div></div><div class="edate2">${fd(s.end)}</div>`;
     item.addEventListener('click',()=>{document.getElementById('eo').classList.remove('open');openModal(s);});
     list.appendChild(item);
   });
@@ -833,7 +852,14 @@ function openEnding(){
 }
 document.getElementById('ecls').addEventListener('click',()=>document.getElementById('eo').classList.remove('open'));
 document.getElementById('eo').addEventListener('click',e=>{if(e.target===document.getElementById('eo'))document.getElementById('eo').classList.remove('open');});
-function updECnt(){document.getElementById('ecnt').textContent=SHOWS.filter(s=>gst(s)==='ongoing'&&dl(s)<=14&&!iv(s)).length;}
+function updECnt(){
+  const ongoing=SHOWS.filter(s=>gst(s)==='ongoing');
+  const ending=ongoing.filter(s=>dl(s)<=14&&!iv(s));
+  const endWish=ending.filter(s=>isWish(s));
+  let txt=`공연중 ${ongoing.length}`;
+  if(ending.length)txt+=` · 임박 ${ending.length}${endWish.length?`(위시${endWish.length})`:``}`;
+  document.getElementById('ecnt').textContent=txt;
+}
 
 // Photo viewer
 function showPhoto(du){document.getElementById('pimg').src=du;document.getElementById('po').classList.add('open');}
@@ -896,7 +922,7 @@ function renderSettings(){
   const viewed=gv(),recs=gr();
   const viewedCnt=Object.keys(viewed).length;
   let recCnt=0;
-  Object.values(recs).forEach(arr=>{if(arr&&arr.length)recCnt+=arr.length;});
+  Object.values(recs).forEach(arr=>{if(arr&&arr.length)recCnt+=arr.filter(e=>!e.gift).length;});
   document.getElementById('st-stats').innerHTML=`
     <div class="st-stat-grid">
       <div class="st-stat-col"><div class="st-stat-lbl">관람체크공연</div><div class="st-stat-num">${viewedCnt}<span class="st-stat-unit">개</span></div></div>
@@ -914,9 +940,11 @@ function renderStats(){
   const rewatched=[];
   keys.forEach(k=>{
     const entries=recs[k];const s=SM[k];
-    showCnt++;recCnt+=entries.length;
-    if(entries.length>=2){rewatchCnt++;rewatched.push({name:s?s.name:k.split('\x00')[0],cnt:entries.length});}
-    entries.forEach(e=>{
+    const real=entries.filter(e=>!e.gift);
+    if(!real.length)return;
+    showCnt++;recCnt+=real.length;
+    if(real.length>=2){rewatchCnt++;rewatched.push({name:s?s.name:k.split('\x00')[0],cnt:real.length});}
+    real.forEach(e=>{
       const mi=e.date?parseInt(e.date.split('-')[1])-1:-1;
       if(mi>=0&&mi<12)monthly[mi]++;
       if(s){const vk=vd(s.facility,s.hall);venueCnt[vk]=(venueCnt[vk]||0)+1;}
@@ -1005,6 +1033,8 @@ document.getElementById('zoom-label').addEventListener('click',e=>{e.stopPropaga
 document.addEventListener('click',()=>document.getElementById('zoom-menu').classList.remove('open'));
 document.getElementById('today-btn').addEventListener('click',()=>{const tod=dof(today);if(tod<0)return;gscroll.scrollLeft=tod*dpx-gscroll.clientWidth/2;});
 document.getElementById('rg').addEventListener('change',render);document.getElementById('sg').addEventListener('input',render);
+document.getElementById('gst-f').addEventListener('change',render);document.getElementById('gvw-f').addEventListener('change',render);
+document.getElementById('gfav-f').addEventListener('click',()=>{document.getElementById('gfav-f').classList.toggle('on');render();});
 ['rl','sl','vl','ol'].forEach(id=>document.getElementById(id).addEventListener('change',renderList));
 document.getElementById('ql').addEventListener('input',renderList);
 document.getElementById('qr').addEventListener('input',renderRecord);
