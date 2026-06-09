@@ -221,6 +221,13 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 
+/* Wishlist button */
+.wbtn{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:2px 4px;border-radius:6px;line-height:1;}
+.wbtn.on{color:#f06090;}
+.wbtn:hover{background:var(--border);}
+#mwish{background:none;border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:8px;font-size:13px;cursor:pointer;margin-bottom:6px;}
+#mwish.on{color:#f06090;border-color:rgba(240,96,144,.5);background:rgba(240,96,144,.08);}
+
 /* Settings tab */
 #settings-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;display:flex;flex-direction:column;gap:12px;}
 .st-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;}
@@ -239,6 +246,18 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .st-btn.accent:hover{background:rgba(139,124,248,.08);}
 .st-danger{background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#ff5050;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;}
 .st-danger:hover{background:rgba(255,80,80,.2);}
+.st-sub-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px;}
+.st-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.st-bar-lbl{font-size:11px;color:var(--text2);width:26px;text-align:right;flex-shrink:0;}
+.st-bar-track{flex:1;height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;}
+.st-bar-fill{height:100%;background:var(--accent);border-radius:5px;}
+.st-bar-cnt{font-size:11px;color:var(--text2);min-width:24px;flex-shrink:0;text-align:right;}
+.st-rank-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.st-rank-row:last-child{border-bottom:none;}
+.st-rank-n{font-size:11px;color:var(--text3);min-width:14px;text-align:center;flex-shrink:0;}
+.st-rank-nm{flex:1;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.st-rank-cnt{color:var(--accent);font-weight:700;flex-shrink:0;}
+.st-empty{text-align:center;color:var(--text2);padding:20px 0;font-size:13px;}
 </style>
 </head>
 <body>
@@ -270,7 +289,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
     <div id="lc" class="ctrl-grp hidden">
       <select id="rl"><option value="">전체 지역</option></select>
       <select id="sl"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
-      <select id="vl"><option value="">관람 전체</option><option value="viewed">관람</option><option value="unviewed">미관람</option></select>
+      <select id="vl"><option value="">관람 전체</option><option value="viewed">관람</option><option value="unviewed">미관람</option><option value="wish">위시리스트</option></select>
       <select id="ol"><option value="status">상태순</option><option value="name">가나다순</option><option value="dur-asc">기간 짧은순</option><option value="dur-desc">기간 긴순</option></select>
       <input type="search" id="ql" placeholder="공연명 · 극장" autocomplete="off" spellcheck="false">
     </div>
@@ -309,7 +328,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
   <div id="list-view">
     <table class="list-tbl">
       <thead><tr>
-        <th style="width:52px"></th>
+        <th style="width:86px"></th>
         <th>공연명</th>
         <th style="width:84px">상태</th>
         <th>극장</th>
@@ -362,6 +381,10 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <p class="st-warn">⚠ 불러오기 시 현재 기기의 데이터가 덮어씌워집니다. 미리 내보내기를 해두세요.</p>
     </div>
     <div class="st-section">
+      <h3>관람 통계</h3>
+      <div id="st-stat-detail"><div class="st-empty">관람 기록이 없습니다</div></div>
+    </div>
+    <div class="st-section">
       <h3>데이터 초기화</h3>
       <p class="st-note">모든 관람 기록·사진·즐겨찾기를 삭제합니다. 되돌릴 수 없습니다.</p>
       <button id="st-clear" class="st-danger">🗑 모든 개인 데이터 삭제</button>
@@ -385,6 +408,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
         <span class="mlbl">관람</span>
         <span class="mval">
           <button id="mstar">☆ 미관람</button>
+          <button id="mwish">♡ 위시리스트</button>
           <div id="mrecdates"></div>
         </span>
       </div>
@@ -530,6 +554,13 @@ function buildShowGroups(){
   return groups.sort((a,b)=>a.repDate.localeCompare(b.repDate));
 }
 
+// ===== WISHLIST =====
+const WK='lineup2026_wishlist';
+function getWish(){try{return new Set(JSON.parse(localStorage.getItem(WK)||'[]'))}catch{return new Set();}}
+function saveWish(s){localStorage.setItem(WK,JSON.stringify([...s]));}
+function isWish(s){return getWish().has(sk(s));}
+function toggleWish(s){const w=getWish(),k=sk(s);if(w.has(k))w.delete(k);else w.add(k);saveWish(w);}
+
 // ===== FAVORITES =====
 const FK='lineup2026_fav_venues';
 function getFavs(){try{return new Set(JSON.parse(localStorage.getItem(FK)||'[]'))}catch{return new Set();}}
@@ -618,7 +649,7 @@ function renderList(){
   const q=document.getElementById('ql').value.trim().toLowerCase();
   let fl=SHOWS.filter(s=>{
     if(reg&&s.region!==reg)return false;if(st&&gst(s)!==st)return false;
-    if(vw==='viewed'&&!iv(s))return false;if(vw==='unviewed'&&iv(s))return false;
+    if(vw==='viewed'&&!iv(s))return false;if(vw==='unviewed'&&iv(s))return false;if(vw==='wish'&&!isWish(s))return false;
     if(q&&!(s.name+s.facility+s.hall).toLowerCase().includes(q))return false;return true;
   });
   const so={ongoing:0,upcoming:1,ended:2};
@@ -627,16 +658,17 @@ function renderList(){
   document.getElementById('lempty').classList.toggle('show',fl.length===0);
   if(curTab==='list')cbadge.textContent=fl.length+'개 공연';
   fl.forEach(s=>{
-    const status=gst(s),soon=es(s),viewed=iv(s),recs=gsr(s),rcnt=recs.length,d=dur(s),dl2=dl(s);
+    const status=gst(s),soon=es(s),viewed=iv(s),wish=isWish(s),recs=gsr(s),rcnt=recs.length,d=dur(s),dl2=dl(s);
     const tr=document.createElement('tr');tr.className='list-row';
-    tr.innerHTML=`<td><div class="vcell"><button class="vbtn${viewed?' on':''}">${viewed?'★':'☆'}</button>${rcnt>0?`<span class="rpill">${rcnt}</span>`:''}</div></td>
+    tr.innerHTML=`<td><div class="vcell"><button class="vbtn${viewed?' on':''}">${viewed?'★':'☆'}</button><button class="wbtn${wish?' on':''}">${wish?'♥':'♡'}</button>${rcnt>0?`<span class="rpill">${rcnt}</span>`:''}</div></td>
       <td><div class="cell-name"><div class="ndot" style="background:${bc(s)}"></div><span class="ntext">${s.name}</span>${soon?`<span class="ebadge">D-${dl2}</span>`:''}</div></td>
       <td><span class="sbadge ${status}">${SL[status]}</span></td>
       <td class="col-venue">${vd(s.facility,s.hall)}</td>
       <td style="font-size:12px;color:var(--text2)">${s.region||'-'}</td>
       <td><div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div><div class="col-dur">${d}일</div></td>`;
     tr.querySelector('.vbtn').addEventListener('click',e=>{e.stopPropagation();tv(s);renderList();});
-    tr.addEventListener('click',e=>{if(e.target.closest('.vbtn'))return;openModal(s);});
+    tr.querySelector('.wbtn').addEventListener('click',e=>{e.stopPropagation();toggleWish(s);renderList();});
+    tr.addEventListener('click',e=>{if(e.target.closest('.vbtn,.wbtn'))return;openModal(s);});
     tb.appendChild(tr);
   });
 }
@@ -715,6 +747,8 @@ function openModal(s){
 function updModal(s){
   const viewed=iv(s);const star=document.getElementById('mstar');
   star.className=viewed?'on':'';star.textContent=viewed?'★ 관람':'☆ 미관람';
+  const wish=isWish(s);const mw=document.getElementById('mwish');
+  mw.className=wish?'on':'';mw.textContent=wish?'♥ 위시리스트':'♡ 위시리스트';
   const recs=gsr(s),wrap=document.getElementById('mrecdates');wrap.innerHTML='';
   recs.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
     const p=document.createElement('span');p.className='mdrec'+(e.photo?' hp':'');
@@ -724,6 +758,7 @@ function updModal(s){
   });
 }
 document.getElementById('mstar').addEventListener('click',()=>{if(!curShow)return;tv(curShow);updModal(curShow);if(curTab==='list')renderList();});
+document.getElementById('mwish').addEventListener('click',()=>{if(!curShow)return;toggleWish(curShow);updModal(curShow);if(curTab==='list')renderList();});
 document.getElementById('madd').addEventListener('click',()=>{if(!curShow)return;openAR(curShow);});
 document.getElementById('mcls').addEventListener('click',()=>ov.classList.remove('open'));
 ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});
@@ -855,9 +890,61 @@ function renderSettings(){
       <div class="st-stat-col"><div class="st-stat-lbl">관람체크공연</div><div class="st-stat-num">${viewedCnt}<span class="st-stat-unit">개</span></div></div>
       <div class="st-stat-col"><div class="st-stat-lbl">관람기록</div><div class="st-stat-num">${recCnt}<span class="st-stat-unit">회</span></div></div>
     </div>`;
+  renderStats();
+}
+function renderStats(){
+  const recs=gr();
+  const keys=Object.keys(recs).filter(k=>recs[k]&&recs[k].length);
+  if(!keys.length){document.getElementById('st-stat-detail').innerHTML='<div class="st-empty">관람 기록이 없습니다</div>';return;}
+  let showCnt=0,recCnt=0,rewatchCnt=0;
+  const monthly=new Array(12).fill(0);
+  const venueCnt={};
+  const rewatched=[];
+  keys.forEach(k=>{
+    const entries=recs[k];const s=SM[k];
+    showCnt++;recCnt+=entries.length;
+    if(entries.length>=2){rewatchCnt++;rewatched.push({name:s?s.name:k.split('\x00')[0],cnt:entries.length});}
+    entries.forEach(e=>{
+      const mi=e.date?parseInt(e.date.split('-')[1])-1:-1;
+      if(mi>=0&&mi<12)monthly[mi]++;
+      if(s){const vk=vd(s.facility,s.hall);venueCnt[vk]=(venueCnt[vk]||0)+1;}
+    });
+  });
+  const venueTop=Object.entries(venueCnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  rewatched.sort((a,b)=>b.cnt-a.cnt);
+  const maxM=Math.max(...monthly,1);
+  let h='';
+  // 요약 그리드
+  h+=`<div class="st-stat-grid" style="margin-bottom:16px">
+    <div class="st-stat-col"><div class="st-stat-lbl">관람공연</div><div class="st-stat-num">${showCnt}<span class="st-stat-unit">개</span></div></div>
+    <div class="st-stat-col"><div class="st-stat-lbl">총관람</div><div class="st-stat-num">${recCnt}<span class="st-stat-unit">회</span></div></div>
+    <div class="st-stat-col"><div class="st-stat-lbl">재관람</div><div class="st-stat-num">${rewatchCnt}<span class="st-stat-unit">편</span></div></div>
+    <div class="st-stat-col"><div class="st-stat-lbl">극장</div><div class="st-stat-num">${Object.keys(venueCnt).length}<span class="st-stat-unit">곳</span></div></div>
+  </div>`;
+  // 월별
+  if(monthly.some(v=>v>0)){
+    h+=`<div class="st-sub-title">월별 관람</div>`;
+    monthly.forEach((cnt,mi)=>{
+      if(!cnt)return;
+      h+=`<div class="st-bar-row"><span class="st-bar-lbl">${mi+1}월</span><div class="st-bar-track"><div class="st-bar-fill" style="width:${Math.round(cnt/maxM*100)}%"></div></div><span class="st-bar-cnt">${cnt}회</span></div>`;
+    });
+  }
+  // 자주 간 극장
+  if(venueTop.length){
+    h+=`<div class="st-sub-title">자주 간 극장</div>`;
+    venueTop.forEach(([name,cnt],i)=>{
+      h+=`<div class="st-rank-row"><span class="st-rank-n">${i+1}</span><span class="st-rank-nm">${name}</span><span class="st-rank-cnt">${cnt}회</span></div>`;
+    });
+  }
+  // 재관람 공연
+  if(rewatched.length){
+    h+=`<div class="st-sub-title">재관람 공연</div>`;
+    rewatched.forEach(r=>{h+=`<div class="st-rank-row"><span class="st-rank-nm">${r.name}</span><span class="st-rank-cnt">${r.cnt}회</span></div>`;});
+  }
+  document.getElementById('st-stat-detail').innerHTML=h;
 }
 document.getElementById('st-export').addEventListener('click',()=>{
-  const data={version:'1',exportedAt:TI,viewed:gv(),records:gr(),fav_venues:[...getFavs()]};
+  const data={version:'1',exportedAt:TI,viewed:gv(),records:gr(),fav_venues:[...getFavs()],wishlist:[...getWish()]};
   const json=JSON.stringify(data,null,2);
   const a=document.createElement('a');
   a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
@@ -875,7 +962,7 @@ document.getElementById('st-import-file').addEventListener('change',function(){
       const recCnt=Object.values(recs).reduce((t,a)=>t+(a?a.length:0),0);
       const msg=`불러오기하면 현재 기기의 데이터가 덮어씌워집니다.\n\n관람 체크: ${Object.keys(data.viewed).length}개\n관람 기록: ${recCnt}회\n즐겨찾기: ${(data.fav_venues||[]).length}개\n\n계속하시겠습니까?`;
       if(!confirm(msg)){this.value='';return;}
-      sv(data.viewed);sr(recs);saveFavs(new Set(data.fav_venues||[]));
+      sv(data.viewed);sr(recs);saveFavs(new Set(data.fav_venues||[]));saveWish(new Set(data.wishlist||[]));
       alert('데이터를 성공적으로 불러왔습니다.');
       renderSettings();
     }catch{alert('올바른 형식의 파일이 아닙니다.');}
@@ -885,7 +972,7 @@ document.getElementById('st-import-file').addEventListener('change',function(){
 });
 document.getElementById('st-clear').addEventListener('click',()=>{
   if(!confirm('모든 관람 기록·사진·즐겨찾기가 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?'))return;
-  localStorage.removeItem(VK);localStorage.removeItem(RK);localStorage.removeItem(FK);
+  localStorage.removeItem(VK);localStorage.removeItem(RK);localStorage.removeItem(FK);localStorage.removeItem(WK);
   alert('모든 개인 데이터가 삭제되었습니다.');
   renderSettings();
 });
