@@ -114,7 +114,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .ebadge{display:inline-block;padding:2px 7px;border-radius:10px;flex-shrink:0;font-size:10px;font-weight:700;background:rgba(255,160,50,.18);color:#ffa030;}
 .gift-badge{display:inline-block;padding:1px 5px;border-radius:8px;font-size:10px;font-weight:700;background:rgba(80,168,112,.18);color:#3a9960;margin-left:4px;flex-shrink:0;}
 .gift-cnt{font-size:11px;color:#3a9960;margin-left:3px;}
-#gfav-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;align-self:stretch;}
+#gfav-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;align-self:stretch;}
 #gfav-f.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 .col-venue{font-size:12px;color:var(--text2);}
 .col-dates{font-size:12px;color:var(--text2);white-space:nowrap;}
@@ -169,7 +169,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .mlbl{font-size:11px;color:var(--text2);min-width:60px;text-transform:uppercase;letter-spacing:.3px;padding-top:2px;}
 .mval{font-size:14px;color:var(--text1);flex:1;line-height:1.5;}
 .mdiv{height:1px;background:var(--border);margin:10px 0;}
-#mstar{background:none;border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:8px;font-size:13px;cursor:pointer;margin-bottom:6px;}
+#mstar{background:none;border:1px solid var(--border);color:var(--text2);padding:4px 12px;border-radius:8px;font-size:13px;cursor:default;pointer-events:none;margin-bottom:6px;}
 #mstar.on{color:var(--accent);border-color:rgba(139,124,248,.5);background:rgba(139,124,248,.08);}
 #mrecdates{display:flex;flex-wrap:wrap;gap:4px;}
 .mdrec{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);padding:3px 9px;border-radius:12px;}
@@ -472,7 +472,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v22';const APP_DATE='2026.06.10';
+const APP_VER='v23';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -693,9 +693,8 @@ function renderList(){
       <td class="col-venue">${vd(s.facility,s.hall)}</td>
       <td style="font-size:12px;color:var(--text2)">${s.region||'-'}</td>
       <td><div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div><div class="col-dur">${d}일</div></td>`;
-    tr.querySelector('.vbtn').addEventListener('click',e=>{e.stopPropagation();tv(s);updECnt();renderList();});
     tr.querySelector('.wbtn').addEventListener('click',e=>{e.stopPropagation();toggleWish(s);renderList();});
-    tr.addEventListener('click',e=>{if(e.target.closest('.vbtn,.wbtn'))return;openModal(s);});
+    tr.addEventListener('click',e=>{if(e.target.closest('.wbtn'))return;openModal(s);});
     tb.appendChild(tr);
   });
 }
@@ -705,7 +704,7 @@ function renderRecord(){
   const allR=gr();
   const tbody=document.getElementById('rec-tbody');tbody.innerHTML='';
   const empty=document.getElementById('rempty');
-  let keys=Object.keys(allR).filter(k=>allR[k]&&allR[k].length>0);
+  let keys=Object.keys(allR).filter(k=>allR[k]&&allR[k].some(e=>!e.gift));
   if(q)keys=keys.filter(k=>{const s=SM[k];return s&&s.name.toLowerCase().includes(q);});
   empty.classList.toggle('show',keys.length===0);
   if(curTab==='record')cbadge.textContent=keys.length+'개 공연 기록';
@@ -731,7 +730,7 @@ function renderRecord(){
     tdPeriod.innerHTML=`<div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div>`;tr.appendChild(tdPeriod);
     // 관람 (횟수만, 사진수 없음)
     const tdCnt=document.createElement('td');
-    tdCnt.innerHTML=`<span class="rcnt">${realEntries.length}회</span>${giftEntries.length?`<span class="gift-cnt">+나눔${giftEntries.length}</span>`:''}`;tr.appendChild(tdCnt);
+    tdCnt.innerHTML=`${realEntries.length?`<span class="rcnt">${realEntries.length}회</span>`:''}${giftEntries.length?`<span class="gift-badge" style="margin-left:${realEntries.length?'4px':'0'}">나눔${giftEntries.length}</span>`:''}`;tr.appendChild(tdCnt);
     // 관람일 (대표 날짜)
     const tdDates=document.createElement('td');
     tdDates.innerHTML=`<span style="font-size:12px;color:var(--text2)">${fd(repDate)||'-'}</span>`;
@@ -786,7 +785,7 @@ function updModal(s){
     wrap.appendChild(p);
   });
 }
-document.getElementById('mstar').addEventListener('click',()=>{if(!curShow)return;tv(curShow);updModal(curShow);updECnt();if(curTab==='gantt')render();if(curTab==='list')renderList();});
+// mstar: 관람기록 자동 반영, 수동 토글 없음
 document.getElementById('mwish').addEventListener('click',()=>{if(!curShow)return;toggleWish(curShow);updModal(curShow);if(curTab==='list')renderList();});
 document.getElementById('madd').addEventListener('click',()=>{if(!curShow)return;openAR(curShow);});
 document.getElementById('mcls').addEventListener('click',()=>ov.classList.remove('open'));
@@ -941,7 +940,7 @@ function renderStats(){
   const keys=Object.keys(recs).filter(k=>recs[k]&&recs[k].length);
   if(!keys.length){document.getElementById('st-stat-detail').innerHTML='<div class="st-empty">관람 기록이 없습니다</div>';return;}
   let showCnt=0,recCnt=0,rewatchCnt=0;
-  const monthly=new Array(12).fill(0);
+  const monthly=new Array(13).fill(0);
   const venueCnt={};
   const rewatched=[];
   keys.forEach(k=>{
@@ -951,8 +950,8 @@ function renderStats(){
     showCnt++;recCnt+=real.length;
     if(real.length>=2){rewatchCnt++;rewatched.push({name:s?s.name:k.split('\x00')[0],cnt:real.length});}
     real.forEach(e=>{
-      const mi=e.date?parseInt(e.date.split('-')[1])-1:-1;
-      if(mi>=0&&mi<12)monthly[mi]++;
+      let mi=-1;if(e.date){const pt=e.date.split('-'),y=parseInt(pt[0]),m=parseInt(pt[1]);if(y===2025&&m===12)mi=0;else if(y===2026&&m>=1&&m<=12)mi=m;}
+      if(mi>=0&&mi<=12)monthly[mi]++;
       if(s){const vk=vd(s.facility,s.hall);venueCnt[vk]=(venueCnt[vk]||0)+1;}
     });
   });
@@ -972,7 +971,7 @@ function renderStats(){
     h+=`<div class="st-sub-title">월별 관람</div>`;
     monthly.forEach((cnt,mi)=>{
       if(!cnt)return;
-      h+=`<div class="st-bar-row"><span class="st-bar-lbl">${mi+1}월</span><div class="st-bar-track"><div class="st-bar-fill" style="width:${Math.round(cnt/maxM*100)}%"></div></div><span class="st-bar-cnt">${cnt}회</span></div>`;
+      h+=`<div class="st-bar-row"><span class="st-bar-lbl">${MONTH_NAMES[mi]}</span><div class="st-bar-track"><div class="st-bar-fill" style="width:${Math.round(cnt/maxM*100)}%"></div></div><span class="st-bar-cnt">${cnt}회</span></div>`;
     });
   }
   // 자주 간 극장
