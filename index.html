@@ -385,6 +385,11 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
     <div class="st-section">
       <h3>앱 업데이트</h3>
       <p class="st-note">공연 데이터 또는 앱이 업데이트된 경우 아래 버튼으로 즉시 반영할 수 있습니다.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px 20px;margin-bottom:12px;font-size:13px;color:var(--text2)">
+        <span>앱 버전 <strong id="st-ver" style="color:var(--text1)"></strong></span>
+        <span>앱 업데이트 <strong id="st-date" style="color:var(--text1)"></strong></span>
+        <span>공연 데이터 <strong id="st-data-date" style="color:var(--text1)"></strong></span>
+      </div>
       <button id="st-update" class="st-btn accent">🔄 지금 업데이트 확인</button>
       <p id="st-update-msg" style="display:none;margin-top:8px;font-size:12px;color:var(--text3)"></p>
     </div>
@@ -467,6 +472,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
+const APP_VER='v18';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -919,6 +925,9 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 
 // Settings
 function renderSettings(){
+  document.getElementById('st-ver').textContent=APP_VER;
+  document.getElementById('st-date').textContent=APP_DATE;
+  document.getElementById('st-data-date').textContent=SHOWS_META.date+' ('+SHOWS_META.count+'건)';
   const viewed=gv(),recs=gr();
   const viewedCnt=Object.keys(viewed).length;
   let recCnt=0;
