@@ -453,8 +453,8 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const MONTH_DAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
-const MONTH_NAMES=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
+const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
 const ZOOM_LEVELS=[3.2,4.8,6.4,9.6,14.4];
 const SL={ongoing:'공연중',ended:'종료',upcoming:'예정'};
@@ -479,7 +479,7 @@ function cn(n){return n.replace(/\s*\(구[^)]+\)/g,'').replace(/\s+/g,' ').trim(
 function vd(f,h){const cf=cn(f),ch=cn(h);return cf===ch?ch:cf+' '+ch;}
 function sk(s){return s.name+'\x00'+s.facility+'\x00'+s.hall;}
 function pi(s){if(!s||s.length<10)return null;const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
-function dof(d){let x=0;for(let i=0;i<d.getMonth();i++)x+=MONTH_DAYS[i];return x+d.getDate()-1;}
+function dof(d){const y=d.getFullYear(),m=d.getMonth();let idx;if(y===2025&&m===11)idx=0;else if(y===2026)idx=m+1;else return -1;let x=0;for(let i=0;i<idx;i++)x+=MONTH_DAYS[i];return x+d.getDate()-1;}
 function fd(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return y+'.'+m+'.'+d;}
 function fds(iso){if(!iso)return'';const[,m,d]=iso.split('-');return m+'.'+d;}
 function dur(s){const a=pi(s.start),b=pi(s.end);return a&&b?Math.round((b-a)/86400000)+1:0;}
@@ -590,7 +590,7 @@ function buildHdr(){
     off+=days;
   });
   const tl=document.getElementById('today-line'),tp=document.getElementById('today-pill');
-  if(today.getFullYear()===2026){const tx=dof(today)*dpx;tl.style.left=tx+'px';tl.style.display='';tp.style.left=tx+'px';tp.style.display='';}
+  const todOff=dof(today);if(todOff>=0){const tx=todOff*dpx;tl.style.left=tx+'px';tl.style.display='';tp.style.left=tx+'px';tp.style.display='';}
   else{tl.style.display='none';tp.style.display='none';}
 }
 
@@ -988,7 +988,7 @@ document.getElementById('zoom-in').addEventListener('click',()=>doZoom(zIdx+1));
 document.getElementById('zoom-out').addEventListener('click',()=>doZoom(zIdx-1));
 document.getElementById('zoom-label').addEventListener('click',e=>{e.stopPropagation();document.getElementById('zoom-menu').classList.toggle('open');});
 document.addEventListener('click',()=>document.getElementById('zoom-menu').classList.remove('open'));
-document.getElementById('today-btn').addEventListener('click',()=>{if(today.getFullYear()!==2026)return;gscroll.scrollLeft=dof(today)*dpx-gscroll.clientWidth/2;});
+document.getElementById('today-btn').addEventListener('click',()=>{const tod=dof(today);if(tod<0)return;gscroll.scrollLeft=tod*dpx-gscroll.clientWidth/2;});
 document.getElementById('rg').addEventListener('change',render);document.getElementById('sg').addEventListener('input',render);
 ['rl','sl','vl','ol'].forEach(id=>document.getElementById(id).addEventListener('change',renderList));
 document.getElementById('ql').addEventListener('input',renderList);
