@@ -291,7 +291,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <select id="rl"><option value="">전체 지역</option></select>
       <select id="sl"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
       <select id="vl"><option value="">관람 전체</option><option value="viewed">관람</option><option value="unviewed">미관람</option><option value="wish">위시리스트</option></select>
-      <select id="ol"><option value="status">상태순</option><option value="name">가나다순</option><option value="dur-asc">기간 짧은순</option><option value="dur-desc">기간 긴순</option></select>
+      <select id="ol"><option value="status">상태순</option><option value="name">가나다순</option><option value="start-asc">개막일 빠른순</option><option value="start-desc">개막일 늦은순</option><option value="end-asc">폐막일 빠른순</option><option value="end-desc">폐막일 늦은순</option><option value="dur-asc">기간 짧은순</option><option value="dur-desc">기간 긴순</option></select>
       <input type="search" id="ql" placeholder="공연명 · 극장" autocomplete="off" spellcheck="false">
     </div>
     <div id="rc" class="ctrl-grp hidden">
@@ -656,7 +656,7 @@ function renderList(){
     if(q&&!(s.name+s.facility+s.hall).toLowerCase().includes(q))return false;return true;
   });
   const so={ongoing:0,upcoming:1,ended:2};
-  fl.sort((a,b)=>{switch(sort){case'status':{const d=so[gst(a)]-so[gst(b)];return d?d:a.name<b.name?-1:1;}case'name':return a.name<b.name?-1:1;case'dur-asc':return dur(a)-dur(b);case'dur-desc':return dur(b)-dur(a);default:return 0;}});
+  fl.sort((a,b)=>{switch(sort){case'status':{const d=so[gst(a)]-so[gst(b)];return d?d:a.name<b.name?-1:1;}case'name':return a.name<b.name?-1:1;case'start-asc':return a.start.localeCompare(b.start);case'start-desc':return b.start.localeCompare(a.start);case'end-asc':return a.end.localeCompare(b.end);case'end-desc':return b.end.localeCompare(a.end);case'dur-asc':return dur(a)-dur(b);case'dur-desc':return dur(b)-dur(a);default:return 0;}});
   const tb=document.getElementById('ltbody');tb.innerHTML='';
   document.getElementById('lempty').classList.toggle('show',fl.length===0);
   if(curTab==='list')cbadge.textContent=fl.length+'개 공연';
