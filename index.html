@@ -361,7 +361,6 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
         <th style="width:84px">상태</th>
         <th>기간</th>
         <th style="width:60px">관람</th>
-        <th style="width:32px;text-align:center">📷</th>
         <th>관람일</th>
         <th style="width:110px"></th>
       </tr></thead>
@@ -476,7 +475,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v26';const APP_DATE='2026.06.10';
+const APP_VER='v27';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -724,8 +723,9 @@ function renderRecord(){
     // Main row
     const tr=document.createElement('tr');tr.className='rec-row';
     // 공연명
+    const hasPhoto=realEntries.some(e=>e.photo);
     const tdName=document.createElement('td');
-    tdName.innerHTML=`<div class="cell-name"><div class="rdot" style="background:${bc(s)}"></div><span class="ntext">${s.name}</span></div>`;
+    tdName.innerHTML=`<div class="cell-name"><div class="rdot" style="background:${bc(s)}"></div><span class="ntext">${s.name}</span>${hasPhoto?'<span class="cam-badge">📷</span>':''}</div>`;
     tr.appendChild(tdName);
     // 상태
     const tdSt=document.createElement('td');
@@ -735,10 +735,8 @@ function renderRecord(){
     tdPeriod.innerHTML=`<div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div>`;tr.appendChild(tdPeriod);
     // 관람 (횟수만, 사진수 없음)
     const tdCnt=document.createElement('td');
-    const hasPhoto=realEntries.some(e=>e.photo);
     tdCnt.style.cssText='white-space:nowrap;text-align:center';
     tdCnt.innerHTML=`${realEntries.length?`<span class="rcnt">${realEntries.length}회</span>`:''}${giftEntries.length?`<span class="gift-badge" style="margin-left:${realEntries.length?'4px':'0'}">나눔${giftEntries.length}</span>`:''}`;tr.appendChild(tdCnt);
-    const tdPhoto=document.createElement('td');tdPhoto.style.cssText='text-align:center;font-size:14px';tdPhoto.textContent=hasPhoto?'📷':'';tr.appendChild(tdPhoto);
     // 관람일 (대표 날짜)
     const tdDates=document.createElement('td');
     tdDates.innerHTML=`<span style="font-size:12px;color:var(--text2)">${fd(repDate)||'-'}</span>`;
@@ -752,7 +750,7 @@ function renderRecord(){
     tbody.appendChild(tr);
     // Detail row
     const detailTr=document.createElement('tr');detailTr.className='rec-detail-row';
-    const detailTd=document.createElement('td');detailTd.className='rec-detail-td';detailTd.colSpan=7;
+    const detailTd=document.createElement('td');detailTd.className='rec-detail-td';detailTd.colSpan=6;
     const inner=document.createElement('div');inner.className='rec-entries-inner';
     entries.forEach(e=>{
       const row=document.createElement('div');row.className='rentry';
