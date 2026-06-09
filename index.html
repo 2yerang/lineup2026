@@ -76,8 +76,13 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 #venue-col{width:var(--venue-w);flex-shrink:0;display:flex;flex-direction:column;background:var(--bg2);border-right:2px solid var(--border);z-index:10;}
 #venue-col-header{height:var(--month-h);display:flex;align-items:center;padding:0 12px;font-size:11px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);flex-shrink:0;text-transform:uppercase;letter-spacing:.5px;}
 #venue-list{flex:1;overflow-y:hidden;}
-.venue-row{display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--border);}
-.venue-name{font-size:12px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
+.venue-row{display:flex;align-items:center;padding:0 6px 0 0;border-bottom:1px solid var(--border);}
+.venue-row.fav-row{background:rgba(139,124,248,.07);}
+.venue-name{font-size:12px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;padding-right:6px;}
+.fav-btn{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:4px 4px 4px 8px;flex-shrink:0;line-height:1;}
+.fav-btn.on{color:#f4c83c;}
+.fav-btn:hover{color:var(--text2);}
+.fav-sep{height:2px;background:linear-gradient(90deg,rgba(139,124,248,.5),transparent);flex-shrink:0;}
 #timeline-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
 #month-header-wrap{height:var(--month-h);overflow-x:hidden;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);}
 #month-header{height:var(--month-h);position:relative;}
@@ -304,9 +309,9 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <thead><tr>
         <th>공연명</th>
         <th style="width:84px">상태</th>
-        <th>극장</th>
-        <th style="width:64px">관람</th>
-        <th>사진 증빙 날짜</th>
+        <th>기간</th>
+        <th style="width:60px">관람</th>
+        <th>관람일</th>
         <th style="width:110px"></th>
       </tr></thead>
       <tbody id="rec-tbody"></tbody>
@@ -438,6 +443,37 @@ const mhdr=document.getElementById('month-header');
 const cbadge=document.getElementById('count-badge');
 const ov=document.getElementById('overlay');
 
+// ===== HELPERS: rep date, photo code, show groups =====
+function getRepDate(entries){
+  const sorted=[...entries].sort((a,b)=>a.date.localeCompare(b.date));
+  const pe=sorted.filter(e=>e.photo);
+  if(pe.length===1)return pe[0].date;
+  return sorted[0]?.date||'';
+}
+function getPhotoCode(name,usedCodes){
+  const parts=name.split(/\s+/).filter(Boolean);
+  let base=(parts[parts.length-1]||name).replace(/\s/g,'').slice(0,6);
+  if(!usedCodes.has(base)){usedCodes.add(base);return base;}
+  for(let i=2;i<=9;i++){const alt=base.slice(0,5)+i;if(!usedCodes.has(alt)){usedCodes.add(alt);return alt;}}
+  return base;
+}
+function buildShowGroups(){
+  const recs=gr(),used=new Set(),groups=[];
+  Object.entries(recs).forEach(([k,entries])=>{
+    const s=SM[k];if(!s||!entries.length)return;
+    const sorted=[...entries].sort((a,b)=>a.date.localeCompare(b.date));
+    groups.push({s,entries:sorted,repDate:getRepDate(sorted),code:getPhotoCode(s.name,used)});
+  });
+  return groups.sort((a,b)=>a.repDate.localeCompare(b.repDate));
+}
+
+// ===== FAVORITES =====
+const FK='lineup2026_fav_venues';
+function getFavs(){try{return new Set(JSON.parse(localStorage.getItem(FK)||'[]'))}catch{return new Set();}}
+function saveFavs(s){localStorage.setItem(FK,JSON.stringify([...s]));}
+function isFav(f,h){return getFavs().has(f+'\x00'+h);}
+function toggleFav(f,h){const s=getFavs(),k=f+'\x00'+h;if(s.has(k))s.delete(k);else s.add(k);saveFavs(s);}
+
 function buildZoomMenu(){
   const m=document.getElementById('zoom-menu');m.innerHTML='';
   ZOOM_LEVELS.map(z=>Math.round(z/ZOOM_LEVELS[0]*100)).forEach((p,i)=>{
@@ -477,27 +513,39 @@ function render(){
   const tot=TOTAL_DAYS*dpx;
   const reg=document.getElementById('rg').value,q=document.getElementById('sg').value.trim().toLowerCase();
   const fl=SHOWS.filter(s=>{if(reg&&s.region!==reg)return false;if(q&&!(s.name+s.facility+s.hall).toLowerCase().includes(q))return false;return true;});
-  const vm=new Map();fl.forEach(s=>{const k=s.facility+'\x00'+s.hall;if(!vm.has(k))vm.set(k,{d:vd(s.facility,s.hall),shows:[]});vm.get(k).shows.push(s);});
-  const venues=[...vm.values()].sort((a,b)=>a.d<b.d?-1:1);
+  const vm=new Map();fl.forEach(s=>{const k=s.facility+'\x00'+s.hall;if(!vm.has(k))vm.set(k,{d:vd(s.facility,s.hall),fac:s.facility,hall:s.hall,shows:[]});vm.get(k).shows.push(s);});
+  const favs=getFavs();
+  const venues=[...vm.values()].sort((a,b)=>{
+    const af=favs.has(a.fac+'\x00'+a.hall),bf=favs.has(b.fac+'\x00'+b.hall);
+    if(af!==bf)return af?-1:1;return a.d<b.d?-1:1;
+  });
   vlist.innerHTML='';gbody.querySelectorAll('.gantt-row,.month-line').forEach(el=>el.remove());
   document.getElementById('gempty').classList.toggle('show',venues.length===0);
   if(curTab==='gantt')cbadge.textContent=fl.length+'개 / '+venues.length+'개 극장';
   gbody.style.width=tot+'px';
   let lo=0;MONTH_DAYS.forEach(d=>{const l=document.createElement('div');l.className='month-line';l.style.left=(lo*dpx)+'px';gbody.insertBefore(l,document.getElementById('today-line'));lo+=d;});
-  venues.forEach(({d:dsp,shows})=>{
+  venues.forEach(({d:dsp,fac,hall,shows},vi)=>{
+    const isFavV=favs.has(fac+'\x00'+hall);
     const lc=assignLanes(shows),rh=lc*28+10;
-    const vr=document.createElement('div');vr.className='venue-row';vr.style.height=rh+'px';
-    const nm=document.createElement('div');nm.className='venue-name';nm.textContent=dsp;nm.title=dsp;vr.appendChild(nm);vlist.appendChild(vr);
-    const gr=document.createElement('div');gr.className='gantt-row';gr.style.height=rh+'px';gr.style.width=tot+'px';
+    const vr=document.createElement('div');vr.className='venue-row'+(isFavV?' fav-row':'');vr.style.height=rh+'px';
+    const fb=document.createElement('button');fb.className='fav-btn'+(isFavV?' on':'');fb.textContent=isFavV?'★':'☆';fb.title=isFavV?'즐겨찾기 해제':'즐겨찾기 추가';
+    fb.addEventListener('click',e=>{e.stopPropagation();toggleFav(fac,hall);render();});
+    const nm=document.createElement('div');nm.className='venue-name';nm.textContent=dsp;nm.title=dsp;
+    vr.appendChild(fb);vr.appendChild(nm);vlist.appendChild(vr);
+    // 즐겨찾기 구분선: 마지막 즐겨찾기 행 다음
+    if(isFavV&&(vi===venues.length-1||!favs.has(venues[vi+1].fac+'\x00'+venues[vi+1].hall))){
+      const sep=document.createElement('div');sep.className='fav-sep';vlist.appendChild(sep);
+    }
+    const gr2=document.createElement('div');gr2.className='gantt-row';gr2.style.height=rh+'px';gr2.style.width=tot+'px';
     shows.forEach(s=>{
       const sd=pi(s.start),ed=pi(s.end);if(!sd||!ed)return;
       const sx=dof(sd)*dpx,ex=(dof(ed)+1)*dpx,w=Math.max(4,ex-sx),y=5+s._l*28,h=25;
       const bar=document.createElement('div');bar.className='show-bar'+(es(s)?' es':'');
       bar.style.cssText=`left:${sx}px;top:${y}px;width:${w}px;height:${h}px;background:${bc(s)};color:${btc(s)}`;
       if(w>=24)bar.textContent=s.name;bar.title=s.name+' ('+fd(s.start)+'~'+fd(s.end)+')';
-      bar.addEventListener('click',()=>openModal(s));gr.appendChild(bar);
+      bar.addEventListener('click',()=>openModal(s));gr2.appendChild(bar);
     });
-    gbody.appendChild(gr);
+    gbody.appendChild(gr2);
   });
 }
 
@@ -539,11 +587,12 @@ function renderRecord(){
   if(q)keys=keys.filter(k=>{const s=SM[k];return s&&s.name.toLowerCase().includes(q);});
   empty.classList.toggle('show',keys.length===0);
   if(curTab==='record')cbadge.textContent=keys.length+'개 공연 기록';
-  keys.sort((a,b)=>{const ae=allR[a],be=allR[b];const ad=ae.map(e=>e.date).sort().pop()||'',bd=be.map(e=>e.date).sort().pop()||'';return bd<ad?-1:bd>ad?1:0;});
+  // 오름차순: getRepDate 기준 빠른 날짜 먼저
+  keys.sort((a,b)=>{const ae=allR[a],be=allR[b];return getRepDate(ae).localeCompare(getRepDate(be));});
   keys.forEach(k=>{
     const s=SM[k];if(!s)return;
-    const entries=(allR[k]||[]).sort((a,b)=>b.date.localeCompare(a.date));
-    const pe=entries.filter(e=>e.photo);
+    const entries=(allR[k]||[]).sort((a,b)=>a.date.localeCompare(b.date));
+    const repDate=getRepDate(entries);
     // Main row
     const tr=document.createElement('tr');tr.className='rec-row';
     // 공연명
@@ -553,18 +602,15 @@ function renderRecord(){
     // 상태
     const tdSt=document.createElement('td');
     tdSt.innerHTML=`<span class="sbadge ${gst(s)}">${SL[gst(s)]}</span>`;tr.appendChild(tdSt);
-    // 극장
-    const tdVn=document.createElement('td');tdVn.className='col-venue';tdVn.textContent=vd(s.facility,s.hall);tr.appendChild(tdVn);
-    // 관람
+    // 기간 (start ~ end, 일수 없음)
+    const tdPeriod=document.createElement('td');
+    tdPeriod.innerHTML=`<div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div>`;tr.appendChild(tdPeriod);
+    // 관람 (횟수만, 사진수 없음)
     const tdCnt=document.createElement('td');
-    tdCnt.innerHTML=`<span class="rcnt">${entries.length}회</span>${pe.length>0?` <span style="font-size:10px;color:var(--text2)">📷${pe.length}</span>`:''}`;tr.appendChild(tdCnt);
-    // 사진 증빙 날짜 chips
+    tdCnt.innerHTML=`<span class="rcnt">${entries.length}회</span>`;tr.appendChild(tdCnt);
+    // 관람일 (대표 날짜)
     const tdDates=document.createElement('td');
-    if(pe.length>0){
-      const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-wrap:wrap;gap:4px;';
-      pe.forEach(e=>{const chip=document.createElement('span');chip.className='dchip';chip.textContent='📷 '+fds(e.date);chip.addEventListener('click',ev=>{ev.stopPropagation();showPhoto(e.photo.dataUrl);});wrap.appendChild(chip);});
-      tdDates.appendChild(wrap);
-    }
+    tdDates.innerHTML=`<span style="font-size:12px;color:var(--text2)">${fd(repDate)||'-'}</span>`;
     tr.appendChild(tdDates);
     // 액션
     const tdAct=document.createElement('td');
@@ -686,23 +732,34 @@ document.getElementById('po').addEventListener('click',e=>{if(e.target===documen
 
 // CSV / ZIP
 document.getElementById('csv-btn').addEventListener('click',()=>{
-  const recs=gr(),pm={};let pn=1;
-  const all=[];Object.entries(recs).forEach(([k,entries])=>{const s=SM[k];if(!s)return;entries.forEach(e=>all.push({s,e}));});
-  all.sort((a,b)=>a.e.date.localeCompare(b.e.date));all.forEach(({e})=>{if(e.photo)pm[e.id]=pn++;});
-  const rows=[['번호','공연명','관람일','극장','지역','사진파일명']];let n=1;
-  all.forEach(({s,e})=>{const ext=e.photo?.ext||'jpg';const fn=e.photo?`이예랑_${String(pm[e.id]).padStart(2,'0')}_${s.name.replace(/[\/\\:*?"<>|]/g,'')}.${ext}`:'';rows.push([n++,s.name,e.date,vd(s.facility,s.hall),s.region,fn]);});
-  if(rows.length===1){alert('저장된 관람 기록이 없습니다.');return;}
+  const groups=buildShowGroups();
+  if(!groups.length){alert('저장된 관람 기록이 없습니다.');return;}
+  const rows=[['순번','공연명','관람일','사진파일명','관람횟수']];
+  groups.forEach((g,i)=>{
+    const n=i+1;
+    const repPhoto=g.entries.filter(e=>e.photo)[0]||null;
+    const ext=repPhoto?.photo?.ext||'jpg';
+    const fname=repPhoto?`이예랑_${String(n).padStart(2,'0')}_${g.code}.${ext}`:'';
+    rows.push([n,g.s.name,g.repDate,fname,g.entries.length]);
+  });
   const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='이예랑_관람기록.csv';a.click();
 });
 document.getElementById('zip-btn').addEventListener('click',async()=>{
   if(typeof JSZip==='undefined'){alert('ZIP 라이브러리를 불러오지 못했습니다. 온라인 상태에서 다시 시도해주세요.');return;}
-  const recs=gr();const pe=[];
-  Object.entries(recs).forEach(([k,entries])=>{const s=SM[k];if(!s)return;entries.forEach(e=>{if(e.photo)pe.push({s,e});});});
-  pe.sort((a,b)=>a.e.date.localeCompare(b.e.date));
-  if(!pe.length){alert('저장된 사진이 없습니다.');return;}
-  const zip=new JSZip();
-  pe.forEach(({s,e},i)=>{const ext=e.photo.ext||'jpg';const nm=`이예랑_${String(i+1).padStart(2,'0')}_${s.name.replace(/[\/\\:*?"<>|]/g,'')}.${ext}`;zip.file(nm,e.photo.dataUrl.split(',')[1],{base64:true});});
+  const groups=buildShowGroups();
+  const zip=new JSZip();let hasPhotos=false;
+  groups.forEach((g,gi)=>{
+    const n=gi+1;
+    const photoEntries=g.entries.filter(e=>e.photo);
+    photoEntries.forEach((e,pi)=>{
+      const ext=e.photo.ext||'jpg';
+      const suffix=pi===0?'':`_${pi+1}`;
+      const nm=`이예랑_${String(n).padStart(2,'0')}_${g.code}${suffix}.${ext}`;
+      zip.file(nm,e.photo.dataUrl.split(',')[1],{base64:true});hasPhotos=true;
+    });
+  });
+  if(!hasPhotos){alert('저장된 사진이 없습니다.');return;}
   const blob=await zip.generateAsync({type:'blob'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='이예랑_티켓사진.zip';a.click();URL.revokeObjectURL(url);
 });
 
