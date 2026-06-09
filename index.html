@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -15,7 +15,7 @@
   --border: #252548;
   --text1: #e8e8f2;
   --text2: #7878a8;
-  --text3: #5050a8;
+  --text3: #3a3a68;
   --accent: #8b7cf8;
   --today: #ff5f5f;
   --header-h: 52px;
@@ -23,7 +23,6 @@
   --venue-w: 210px;
   --lane-h: 28px;
   --row-pad: 5px;
-  --day-px: 3.2px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
@@ -44,18 +43,18 @@ body {
   display: flex;
   align-items: center;
   padding: 0 14px;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
   z-index: 20;
 }
 #header h1 {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.3px;
   flex: 1;
   white-space: nowrap;
 }
-#header select, #header input {
+#header select, #header input[type=text] {
   background: var(--bg3);
   border: 1px solid var(--border);
   color: var(--text1);
@@ -66,22 +65,54 @@ body {
   appearance: none;
   outline: none;
 }
-#region-filter { width: 90px; }
-#search { width: 170px; }
+#region-filter { width: 86px; }
+#search { width: 160px; }
+
+/* Zoom controls */
+#zoom-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px 4px;
+}
+#zoom-ctrl button {
+  background: none;
+  border: none;
+  color: var(--text1);
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+}
+#zoom-ctrl button:active { background: var(--border); }
+#zoom-ctrl button:disabled { color: var(--text3); cursor: default; }
+#zoom-label {
+  font-size: 11px;
+  color: var(--text2);
+  min-width: 34px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 #count-badge {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text2);
   white-space: nowrap;
-  min-width: 100px;
+  min-width: 90px;
   text-align: right;
 }
 
 /* ── Chart Layout ── */
-#chart-outer {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
+#chart-outer { flex: 1; display: flex; overflow: hidden; }
 
 /* ── Venue Sidebar ── */
 #venue-col {
@@ -113,22 +144,12 @@ body {
 }
 .venue-row {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 3px 12px;
+  align-items: center;
+  padding: 0 12px;
   border-bottom: 1px solid var(--border);
   overflow: hidden;
-  gap: 1px;
 }
-.venue-fac {
-  font-size: 10px;
-  color: var(--text2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-}
-.venue-hall {
+.venue-name {
   font-size: 12px;
   font-weight: 600;
   color: var(--text1);
@@ -136,6 +157,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.3;
+  width: 100%;
 }
 
 /* ── Timeline Area ── */
@@ -153,41 +175,54 @@ body {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
 }
-#month-header {
-  height: var(--month-h);
-  position: relative;
-}
+#month-header { height: var(--month-h); position: relative; }
+
 .month-cell {
   position: absolute;
   top: 0;
   height: 100%;
   display: flex;
-  align-items: center;
-  padding-left: 8px;
+  align-items: flex-start;
+  padding: 5px 0 0 7px;
   font-size: 11px;
   font-weight: 700;
   color: var(--text2);
   border-left: 1px solid var(--border);
   letter-spacing: -0.2px;
+  overflow: hidden;
 }
 .week-tick {
   position: absolute;
-  top: 50%;
+  bottom: 0;
   width: 1px;
-  height: 8px;
+  height: 10px;
   background: var(--border);
 }
+.day-tick {
+  position: absolute;
+  bottom: 0;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: var(--text3);
+  border-left: 1px solid var(--border);
+  overflow: hidden;
+}
+.day-tick.week-start {
+  height: 20px;
+  color: var(--text2);
+  border-left-color: rgba(120,120,180,0.4);
+}
+
+/* ── Gantt ── */
 #gantt-scroll {
   flex: 1;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
-#gantt-body {
-  position: relative;
-  min-height: 100%;
-}
-
-/* Gantt rows */
+#gantt-body { position: relative; min-height: 100%; }
 .gantt-row {
   position: relative;
   border-bottom: 1px solid var(--border);
@@ -195,8 +230,7 @@ body {
 .gantt-row:nth-child(odd) { background: rgba(255,255,255,0.012); }
 .month-line {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 0; bottom: 0;
   width: 1px;
   background: var(--border);
   opacity: 0.6;
@@ -209,28 +243,22 @@ body {
   border-radius: 4px;
   display: flex;
   align-items: center;
-  padding: 0 6px;
+  padding: 0 5px;
   cursor: pointer;
   overflow: hidden;
   font-size: 10px;
   font-weight: 700;
-  color: rgba(255,255,255,0.92);
   white-space: nowrap;
   user-select: none;
   transition: filter 0.12s, transform 0.12s;
   letter-spacing: -0.2px;
 }
-.show-bar:hover {
-  filter: brightness(1.2);
-  transform: scaleY(1.08);
-  z-index: 5;
-}
+.show-bar:hover { filter: brightness(1.2); transform: scaleY(1.08); z-index: 5; }
 
 /* Today line */
 #today-line {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 0; bottom: 0;
   width: 2px;
   background: var(--today);
   z-index: 6;
@@ -271,21 +299,25 @@ body {
   width: min(480px, 92vw);
   box-shadow: 0 20px 60px rgba(0,0,0,0.6);
 }
-.modal-color-bar {
-  height: 4px;
-  border-radius: 2px;
-  margin-bottom: 16px;
-}
-#modal h2 {
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.3;
-  margin-bottom: 14px;
-}
+.modal-color-bar { height: 4px; border-radius: 2px; margin-bottom: 16px; }
+#modal h2 { font-size: 17px; font-weight: 700; line-height: 1.3; margin-bottom: 14px; }
 .modal-info { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-.modal-row { display: flex; gap: 10px; align-items: baseline; }
+.modal-row { display: flex; gap: 10px; align-items: center; }
 .modal-lbl { font-size: 11px; color: var(--text2); min-width: 56px; text-transform: uppercase; letter-spacing: 0.3px; }
 .modal-val { font-size: 14px; color: var(--text1); flex: 1; line-height: 1.4; }
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.status-ongoing  { background: rgba(76,186,128,0.18); color: #4cde90; }
+.status-ended    { background: rgba(100,100,130,0.18); color: #8888aa; }
+.status-upcoming { background: rgba(139,124,248,0.18); color: #a898ff; }
+
 #modal-close {
   width: 100%;
   padding: 11px;
@@ -296,7 +328,6 @@ body {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  letter-spacing: 0.2px;
 }
 #modal-close:active { opacity: 0.8; }
 
@@ -328,6 +359,11 @@ body {
     <option value="">전체</option>
   </select>
   <input type="text" id="search" placeholder="공연명 · 극장 검색" autocomplete="off" spellcheck="false">
+  <div id="zoom-ctrl">
+    <button id="zoom-out" title="축소">−</button>
+    <span id="zoom-label">100%</span>
+    <button id="zoom-in" title="확대">+</button>
+  </div>
   <span id="count-badge"></span>
 </div>
 
@@ -358,6 +394,7 @@ body {
     <div class="modal-color-bar" id="modal-color"></div>
     <h2 id="modal-title"></h2>
     <div class="modal-info">
+      <div class="modal-row"><span class="modal-lbl">상태</span><span class="modal-val" id="modal-status"></span></div>
       <div class="modal-row"><span class="modal-lbl">극장</span><span class="modal-val" id="modal-venue"></span></div>
       <div class="modal-row"><span class="modal-lbl">지역</span><span class="modal-val" id="modal-region"></span></div>
       <div class="modal-row"><span class="modal-lbl">기간</span><span class="modal-val" id="modal-dates"></span></div>
@@ -369,18 +406,18 @@ body {
 
 <script src="data/shows.js"></script>
 <script>
-// 데이터는 data/shows.js 에서 로드됨
-
 // ===== CONSTANTS =====
-const YEAR = 2026;
-const YEAR_START = new Date(2026, 0, 1);
-const MONTH_DAYS = [31,28,31,30,31,30,31,31,30,31,30,31];
+const MONTH_DAYS  = [31,28,31,30,31,30,31,31,30,31,30,31];
 const MONTH_NAMES = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-const TOTAL_DAYS = MONTH_DAYS.reduce((a,b)=>a+b,0); // 365
+const TOTAL_DAYS  = MONTH_DAYS.reduce((a,b)=>a+b,0); // 365
 
-const DAY_PX = 3.2;
-const LANE_H = 26;
+const LANE_H  = 28;
 const ROW_PAD = 5;
+
+// zoom: px per day
+const ZOOM_LEVELS = [3.2, 4.8, 6.4, 9.6, 14.4];
+let zoomIdx = 0;
+let dayPx   = ZOOM_LEVELS[0];
 
 const PALETTE = [
   '#7c6cf4','#f4706c','#4cba80','#f4c83c','#4caaf4',
@@ -389,15 +426,67 @@ const PALETTE = [
   '#f4b060','#50d490','#e060f4','#c8f460','#60ccf4'
 ];
 
+// ===== HELPERS =====
 function strHash(s) {
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
   return h;
 }
+
 const colorCache = {};
 function showColor(name) {
   if (!colorCache[name]) colorCache[name] = PALETTE[strHash(name) % PALETTE.length];
   return colorCache[name];
+}
+
+function hexToRgb(hex) {
+  return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+}
+
+// today 기준 공연 상태
+const today    = new Date();
+const todayISO = today.getFullYear() + '-' +
+  String(today.getMonth()+1).padStart(2,'0') + '-' +
+  String(today.getDate()).padStart(2,'0');
+
+function getStatus(show) {
+  if (show.end < todayISO)    return 'ended';
+  if (show.start <= todayISO) return 'ongoing';
+  return 'upcoming';
+}
+
+// 막대 배경색: 종료=무채색, 공연중=선명, 예정=파스텔
+function barColor(show) {
+  const status = getStatus(show);
+  if (status === 'ended') return '#424258';
+  const vivid = showColor(show.name);
+  if (status === 'ongoing') return vivid;
+  // upcoming: vivid 색을 흰색과 50% 혼합 → 파스텔
+  const [r,g,b] = hexToRgb(vivid);
+  const pr = Math.round(r + (255-r) * 0.52);
+  const pg = Math.round(g + (255-g) * 0.52);
+  const pb = Math.round(b + (255-b) * 0.52);
+  return `rgb(${pr},${pg},${pb})`;
+}
+
+// 막대 텍스트 색
+function barTextColor(show) {
+  const status = getStatus(show);
+  if (status === 'ended')    return 'rgba(255,255,255,0.45)';
+  if (status === 'upcoming') return 'rgba(20,20,40,0.75)';
+  return 'rgba(255,255,255,0.92)';
+}
+
+// (구.이전명칭) 패턴 제거 + 중복 공백 정리
+function cleanName(name) {
+  return name.replace(/\s*\(구[^)]+\)/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// 공연장 한 줄 표시명: 시설명과 홀명을 합치되 중복 제거
+function venueDisplay(facility, hall) {
+  const cf = cleanName(facility);
+  const ch = cleanName(hall);
+  return cf === ch ? ch : cf + ' ' + ch;
 }
 
 function parseISO(s) {
@@ -425,18 +514,23 @@ const SHOWS = SHOWS_RAW.map(r => ({
 }));
 
 // ===== DOM REFS =====
-const regionSel = document.getElementById('region-filter');
-const searchEl = document.getElementById('search');
-const venueList = document.getElementById('venue-list');
-const ganttBody = document.getElementById('gantt-body');
-const monthHeader = document.getElementById('month-header');
-const mhWrap = document.getElementById('month-header-wrap');
-const ganttScroll = document.getElementById('gantt-scroll');
+const regionSel  = document.getElementById('region-filter');
+const searchEl   = document.getElementById('search');
+const venueList  = document.getElementById('venue-list');
+const ganttBody  = document.getElementById('gantt-body');
+const monthHdr   = document.getElementById('month-header');
+const mhWrap     = document.getElementById('month-header-wrap');
+const ganttScroll= document.getElementById('gantt-scroll');
 const countBadge = document.getElementById('count-badge');
-const overlay = document.getElementById('overlay');
+const overlay    = document.getElementById('overlay');
 const emptyState = document.getElementById('empty-state');
+const todayLine  = document.getElementById('today-line');
+const todayPill  = document.getElementById('today-pill');
+const zoomInBtn  = document.getElementById('zoom-in');
+const zoomOutBtn = document.getElementById('zoom-out');
+const zoomLabel  = document.getElementById('zoom-label');
 
-// ===== POPULATE FILTERS =====
+// ===== POPULATE REGION FILTER =====
 const allRegions = [...new Set(SHOWS.map(s=>s.region).filter(Boolean))].sort();
 allRegions.forEach(r => {
   const o = document.createElement('option');
@@ -445,42 +539,61 @@ allRegions.forEach(r => {
 });
 regionSel.value = '서울';
 
-// ===== BUILD MONTH HEADER =====
-const totalPx = TOTAL_DAYS * DAY_PX;
-monthHeader.style.width = totalPx + 'px';
-let mOff = 0;
-MONTH_NAMES.forEach((name, i) => {
-  const days = MONTH_DAYS[i];
-  const cell = document.createElement('div');
-  cell.className = 'month-cell';
-  cell.textContent = name;
-  cell.style.left = (mOff * DAY_PX) + 'px';
-  cell.style.width = (days * DAY_PX) + 'px';
-  monthHeader.appendChild(cell);
-  // Week ticks
-  for (let w = 7; w < days; w += 7) {
-    const tick = document.createElement('div');
-    tick.className = 'week-tick';
-    tick.style.left = ((mOff + w) * DAY_PX) + 'px';
-    monthHeader.appendChild(tick);
-  }
-  mOff += days;
-});
+// ===== BUILD HEADER =====
+function buildHeader() {
+  const totPx = TOTAL_DAYS * dayPx;
+  monthHdr.innerHTML = '';
+  monthHdr.style.width = totPx + 'px';
 
-// ===== TODAY LINE =====
-const today = new Date();
-const todayLine = document.getElementById('today-line');
-const todayPill = document.getElementById('today-pill');
-if (today.getFullYear() === 2026) {
-  const tx = dayOf(today) * DAY_PX;
-  todayLine.style.left = tx + 'px';
-  todayPill.style.left = tx + 'px';
-} else {
-  todayLine.style.display = 'none';
-  todayPill.style.display = 'none';
+  // Month cells + day/week ticks
+  let mOff = 0;
+  MONTH_DAYS.forEach((days, mi) => {
+    // Month label cell
+    const cell = document.createElement('div');
+    cell.className = 'month-cell';
+    cell.textContent = MONTH_NAMES[mi];
+    cell.style.left  = (mOff * dayPx) + 'px';
+    cell.style.width = (days * dayPx) + 'px';
+    monthHdr.appendChild(cell);
+
+    if (dayPx >= 9.6) {
+      // 일 단위 눈금: 일 번호 표시, 7일마다 주 구분선 강조
+      for (let d = 1; d < days; d++) {
+        const tick = document.createElement('div');
+        const isWeekStart = (d % 7 === 0);
+        tick.className = 'day-tick' + (isWeekStart ? ' week-start' : '');
+        tick.textContent = d + 1;
+        tick.style.left  = ((mOff + d) * dayPx) + 'px';
+        tick.style.width = dayPx + 'px';
+        monthHdr.appendChild(tick);
+      }
+    } else {
+      // 주 단위 눈금
+      for (let w = 7; w < days; w += 7) {
+        const tick = document.createElement('div');
+        tick.className = 'week-tick';
+        tick.style.left = ((mOff + w) * dayPx) + 'px';
+        monthHdr.appendChild(tick);
+      }
+    }
+    mOff += days;
+  });
+
+  // 오늘 선 위치 업데이트
+  if (today.getFullYear() === 2026) {
+    const tx = dayOf(today) * dayPx;
+    todayLine.style.left = tx + 'px';
+    todayLine.style.display = '';
+    todayPill.style.left = tx + 'px';
+    todayPill.style.display = '';
+  } else {
+    todayLine.style.display = 'none';
+    todayPill.style.display = 'none';
+  }
 }
 
 // ===== LANE ASSIGNMENT =====
+// 오름차순 정렬로 효율적 레인 배치 후, 인덱스 역전 → 개막일 빠른 공연이 아래(높은 레인)로
 function assignLanes(shows) {
   const sorted = [...shows].sort((a,b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0);
   const laneEnds = [];
@@ -493,6 +606,9 @@ function assignLanes(shows) {
     }
     if (!placed) { s._lane = laneEnds.length; laneEnds.push(s.end); }
   });
+  const maxLane = laneEnds.length - 1;
+  // 인덱스 역전: 개막일 빠른 공연(lane 0)이 아래(lane maxLane)로
+  shows.forEach(s => { s._lane = maxLane - s._lane; });
   return laneEnds.length;
 }
 
@@ -501,8 +617,8 @@ let syncLock = false;
 ganttScroll.addEventListener('scroll', () => {
   if (syncLock) return;
   syncLock = true;
-  mhWrap.scrollLeft = ganttScroll.scrollLeft;
-  venueList.scrollTop = ganttScroll.scrollTop;
+  mhWrap.scrollLeft    = ganttScroll.scrollLeft;
+  venueList.scrollTop  = ganttScroll.scrollTop;
   syncLock = false;
 });
 venueList.addEventListener('scroll', () => {
@@ -514,8 +630,9 @@ venueList.addEventListener('scroll', () => {
 
 // ===== RENDER =====
 function render() {
+  const totPx = TOTAL_DAYS * dayPx;
   const reg = regionSel.value;
-  const q = searchEl.value.trim().toLowerCase();
+  const q   = searchEl.value.trim().toLowerCase();
 
   const filtered = SHOWS.filter(s => {
     if (reg && s.region !== reg) return false;
@@ -526,81 +643,83 @@ function render() {
     return true;
   });
 
-  // Group by venue
+  // 공연장별 그룹핑
   const venueMap = new Map();
   filtered.forEach(s => {
     const key = s.facility + '\x00' + s.hall;
-    if (!venueMap.has(key)) venueMap.set(key, { facility: s.facility, hall: s.hall, region: s.region, shows: [] });
+    if (!venueMap.has(key)) {
+      venueMap.set(key, {
+        display: venueDisplay(s.facility, s.hall),
+        facility: s.facility, hall: s.hall,
+        shows: []
+      });
+    }
     venueMap.get(key).shows.push(s);
   });
 
   const venues = [...venueMap.values()].sort((a,b) => {
-    if (a.facility < b.facility) return -1;
-    if (a.facility > b.facility) return 1;
-    return a.hall < b.hall ? -1 : 1;
+    const da = venueDisplay(a.facility, a.hall);
+    const db = venueDisplay(b.facility, b.hall);
+    return da < db ? -1 : da > db ? 1 : 0;
   });
 
-  // Clear old content
+  // 초기화
   venueList.innerHTML = '';
   ganttBody.querySelectorAll('.gantt-row, .month-line').forEach(el => el.remove());
 
   emptyState.classList.toggle('show', venues.length === 0);
-  countBadge.textContent = filtered.length + '개 공연 / ' + venues.length + '개 극장';
+  countBadge.textContent = filtered.length + '개 / ' + venues.length + '개 극장';
 
-  ganttBody.style.width = totalPx + 'px';
+  ganttBody.style.width = totPx + 'px';
 
-  // Month separator lines in gantt body
+  // 월 구분선
   let lineOff = 0;
   MONTH_DAYS.forEach(d => {
     const line = document.createElement('div');
     line.className = 'month-line';
-    line.style.left = (lineOff * DAY_PX) + 'px';
+    line.style.left = (lineOff * dayPx) + 'px';
     ganttBody.insertBefore(line, todayLine);
     lineOff += d;
   });
 
-  venues.forEach(({ facility, hall, shows }) => {
+  venues.forEach(({ display, shows }) => {
     const laneCount = assignLanes(shows);
     const rowH = laneCount * LANE_H + ROW_PAD * 2;
 
-    // Sidebar row
+    // 사이드바 행
     const vRow = document.createElement('div');
     vRow.className = 'venue-row';
     vRow.style.height = rowH + 'px';
-    if (facility !== hall) {
-      const fd = document.createElement('div');
-      fd.className = 'venue-fac';
-      fd.textContent = facility;
-      vRow.appendChild(fd);
-    }
-    const hd = document.createElement('div');
-    hd.className = 'venue-hall';
-    hd.textContent = hall;
-    vRow.appendChild(hd);
+    const nm = document.createElement('div');
+    nm.className = 'venue-name';
+    nm.textContent = display;
+    nm.title = display;
+    vRow.appendChild(nm);
     venueList.appendChild(vRow);
 
-    // Gantt row
+    // Gantt 행
     const gRow = document.createElement('div');
     gRow.className = 'gantt-row';
     gRow.style.height = rowH + 'px';
-    gRow.style.width = totalPx + 'px';
+    gRow.style.width  = totPx + 'px';
 
     shows.forEach(show => {
       const sd = parseISO(show.start), ed = parseISO(show.end);
       if (!sd || !ed) return;
-      const sx = dayOf(sd) * DAY_PX;
-      const ex = (dayOf(ed) + 1) * DAY_PX;
-      const w = Math.max(4, ex - sx);
-      const y = ROW_PAD + show._lane * LANE_H;
-      const h = LANE_H - 3;
+      const sx = dayOf(sd) * dayPx;
+      const ex = (dayOf(ed) + 1) * dayPx;
+      const w  = Math.max(4, ex - sx);
+      const y  = ROW_PAD + show._lane * LANE_H;
+      const h  = LANE_H - 3;
 
       const bar = document.createElement('div');
       bar.className = 'show-bar';
-      bar.style.left = sx + 'px';
-      bar.style.top = y + 'px';
-      bar.style.width = w + 'px';
-      bar.style.height = h + 'px';
-      bar.style.background = showColor(show.name);
+      bar.style.left       = sx + 'px';
+      bar.style.top        = y + 'px';
+      bar.style.width      = w + 'px';
+      bar.style.height     = h + 'px';
+      bar.style.background = barColor(show);
+      bar.style.color      = barTextColor(show);
       if (w >= 24) bar.textContent = show.name;
       bar.title = show.name + ' (' + fmtDate(show.start) + '~' + fmtDate(show.end) + ')';
       bar.addEventListener('click', () => openModal(show));
@@ -612,28 +731,64 @@ function render() {
 }
 
 // ===== MODAL =====
+const STATUS_LABEL = { ongoing: '공연중', ended: '종료', upcoming: '예정' };
+
 function openModal(show) {
+  const status = getStatus(show);
   document.getElementById('modal-color').style.background = showColor(show.name);
   document.getElementById('modal-title').textContent = show.name;
-  const venue = show.facility === show.hall ? show.hall : show.facility + ' ' + show.hall;
-  document.getElementById('modal-venue').textContent = venue;
+  document.getElementById('modal-status').innerHTML =
+    `<span class="status-badge status-${status}">${STATUS_LABEL[status]}</span>`;
+  document.getElementById('modal-venue').textContent = venueDisplay(show.facility, show.hall);
   document.getElementById('modal-region').textContent = show.region || '-';
   document.getElementById('modal-dates').textContent = fmtDate(show.start) + ' ~ ' + fmtDate(show.end);
   const sd = parseISO(show.start), ed = parseISO(show.end);
-  const dur = sd && ed ? Math.round((ed - sd) / 86400000) + 1 : '-';
+  const dur = sd && ed ? Math.round((ed-sd)/86400000)+1 : '-';
   document.getElementById('modal-dur').textContent = dur + '일';
   overlay.classList.add('open');
 }
 document.getElementById('modal-close').addEventListener('click', () => overlay.classList.remove('open'));
 overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 
+// ===== ZOOM =====
+function updateZoom() {
+  const pct = Math.round(dayPx / ZOOM_LEVELS[0] * 100);
+  zoomLabel.textContent = pct + '%';
+  zoomOutBtn.disabled = (zoomIdx === 0);
+  zoomInBtn.disabled  = (zoomIdx === ZOOM_LEVELS.length - 1);
+}
+
+zoomInBtn.addEventListener('click', () => {
+  if (zoomIdx >= ZOOM_LEVELS.length - 1) return;
+  const frac = ganttScroll.scrollLeft / (TOTAL_DAYS * dayPx);
+  zoomIdx++;
+  dayPx = ZOOM_LEVELS[zoomIdx];
+  buildHeader();
+  render();
+  ganttScroll.scrollLeft = frac * (TOTAL_DAYS * dayPx);
+  updateZoom();
+});
+
+zoomOutBtn.addEventListener('click', () => {
+  if (zoomIdx <= 0) return;
+  const frac = ganttScroll.scrollLeft / (TOTAL_DAYS * dayPx);
+  zoomIdx--;
+  dayPx = ZOOM_LEVELS[zoomIdx];
+  buildHeader();
+  render();
+  ganttScroll.scrollLeft = frac * (TOTAL_DAYS * dayPx);
+  updateZoom();
+});
+
 // ===== EVENTS =====
 regionSel.addEventListener('change', render);
 searchEl.addEventListener('input', render);
 
+// ===== INIT =====
+buildHeader();
 render();
+updateZoom();
 
-// Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');
 }
