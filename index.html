@@ -843,7 +843,7 @@ document.getElementById('csv-btn').addEventListener('click',()=>{
     const n=i+1;
     const repPhoto=g.entries.filter(e=>e.photo)[0]||null;
     const ext=repPhoto?.photo?.ext||'jpg';
-    const fname=repPhoto?`이예랑_${String(n).padStart(2,'0')}_${g.code}.${ext}`:'';
+    const fname=repPhoto?`이예랑_${String(n).padStart(3,'0')}_${g.code}.${ext}`:'';
     rows.push([n,g.s.name,g.repDate,fname,g.entries.length]);
   });
   const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -859,7 +859,7 @@ document.getElementById('zip-btn').addEventListener('click',async()=>{
     const firstPhoto=g.entries.filter(e=>e.photo)[0]||null;
     if(!firstPhoto)return;
     const ext=firstPhoto.photo.ext||'jpg';
-    const nm=`이예랑_${String(n).padStart(2,'0')}_${g.code}.${ext}`;
+    const nm=`이예랑_${String(n).padStart(3,'0')}_${g.code}.${ext}`;
     zip.file(nm,firstPhoto.photo.dataUrl.split(',')[1],{base64:true});hasPhotos=true;
   });
   if(!hasPhotos){alert('저장된 사진이 없습니다.');return;}
