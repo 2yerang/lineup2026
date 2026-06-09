@@ -220,6 +220,23 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 ::-webkit-scrollbar{width:6px;height:6px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* Settings tab */
+#settings-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.st-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.st-section h3{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;}
+.st-stat{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.st-stat:last-child{border-bottom:none;}
+.st-stat-val{font-weight:700;color:var(--accent);}
+.st-note{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;}
+.st-warn{font-size:11px;color:#ffa030;margin-top:10px;line-height:1.5;}
+.st-btns{display:flex;gap:10px;flex-wrap:wrap;}
+.st-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text1);padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;}
+.st-btn:hover{background:var(--border);}
+.st-btn.accent{border-color:rgba(139,124,248,.5);color:var(--accent);}
+.st-btn.accent:hover{background:rgba(139,124,248,.08);}
+.st-danger{background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#ff5050;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;}
+.st-danger:hover{background:rgba(255,80,80,.2);}
 </style>
 </head>
 <body>
@@ -231,6 +248,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <button class="tab-btn active" data-tab="gantt">간트</button>
       <button class="tab-btn" data-tab="list">리스트</button>
       <button class="tab-btn" data-tab="record">기록</button>
+      <button class="tab-btn" data-tab="settings">설정</button>
     </div>
   </div>
   <div id="hdr-right">
@@ -320,6 +338,31 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <span>📋</span>
       <span>관람 기록이 없습니다</span>
       <span style="font-size:12px;color:var(--text3)">간트·리스트에서 공연 클릭 후 기록을 추가하세요</span>
+    </div>
+  </div>
+</div>
+
+<!-- 설정 -->
+<div id="tab-settings" class="tab-content hidden">
+  <div id="settings-scroll">
+    <div class="st-section">
+      <h3>데이터 현황</h3>
+      <div id="st-stats"></div>
+    </div>
+    <div class="st-section">
+      <h3>백업 / 복원</h3>
+      <p class="st-note">관람 기록·사진·즐겨찾기를 JSON 파일로 내보내거나, 다른 기기에서 가져올 수 있습니다. 사진이 많으면 파일 크기가 수십 MB가 될 수 있습니다.</p>
+      <div class="st-btns">
+        <button id="st-export" class="st-btn accent">💾 JSON 내보내기</button>
+        <button id="st-import" class="st-btn">📂 JSON 불러오기</button>
+      </div>
+      <input type="file" id="st-import-file" accept=".json" style="display:none">
+      <p class="st-warn">⚠ 불러오기 시 현재 기기의 데이터가 덮어씌워집니다. 미리 내보내기를 해두세요.</p>
+    </div>
+    <div class="st-section">
+      <h3>데이터 초기화</h3>
+      <p class="st-note">모든 관람 기록·사진·즐겨찾기를 삭제합니다. 되돌릴 수 없습니다.</p>
+      <button id="st-clear" class="st-danger">🗑 모든 개인 데이터 삭제</button>
     </div>
   </div>
 </div>
@@ -451,8 +494,26 @@ function getRepDate(entries){
   return sorted[0]?.date||'';
 }
 function getPhotoCode(name,usedCodes){
-  const parts=name.split(/\s+/).filter(Boolean);
-  let base=(parts[parts.length-1]||name).replace(/\s/g,'').slice(0,6);
+  // 괄호 내용·연도·Vol·특수문자 제거 후 의미 있는 마지막 단어 추출
+  let n=name
+    .replace(/[\[（(【][^\]）)】]*[\]）)】]/g,'')
+    .replace(/\d{4}/g,'')
+    .replace(/[Vv]ol\.?\s*\d*/g,'')
+    .replace(/[!！?？·~\-]/g,'')
+    .replace(/\s+/g,' ').trim();
+  const SKIP=new Set(['뮤지컬','창작뮤지컬','연극','더']);
+  const parts=n.split(/\s+/).filter(p=>p&&!SKIP.has(p));
+  let base;
+  if(!parts.length){
+    base=name.replace(/\s/g,'').slice(0,6);
+  } else if(parts.length===1){
+    base=parts[0].slice(0,6);
+  } else {
+    const last=parts[parts.length-1];
+    // 마지막 단어가 2자 이하면 앞 단어와 합쳐서 사용
+    base=last.length>=3?last.slice(0,6):(parts[parts.length-2]+last).slice(0,6);
+  }
+  base=base.replace(/[\/\\:*?"<>|]/g,'');
   if(!usedCodes.has(base)){usedCodes.add(base);return base;}
   for(let i=2;i<=9;i++){const alt=base.slice(0,5)+i;if(!usedCodes.has(alt)){usedCodes.add(alt);return alt;}}
   return base;
@@ -751,13 +812,12 @@ document.getElementById('zip-btn').addEventListener('click',async()=>{
   const zip=new JSZip();let hasPhotos=false;
   groups.forEach((g,gi)=>{
     const n=gi+1;
-    const photoEntries=g.entries.filter(e=>e.photo);
-    photoEntries.forEach((e,pi)=>{
-      const ext=e.photo.ext||'jpg';
-      const suffix=pi===0?'':`_${pi+1}`;
-      const nm=`이예랑_${String(n).padStart(2,'0')}_${g.code}${suffix}.${ext}`;
-      zip.file(nm,e.photo.dataUrl.split(',')[1],{base64:true});hasPhotos=true;
-    });
+    // 가장 빠른 관람일의 사진 1장만 포함
+    const firstPhoto=g.entries.filter(e=>e.photo)[0]||null;
+    if(!firstPhoto)return;
+    const ext=firstPhoto.photo.ext||'jpg';
+    const nm=`이예랑_${String(n).padStart(2,'0')}_${g.code}.${ext}`;
+    zip.file(nm,firstPhoto.photo.dataUrl.split(',')[1],{base64:true});hasPhotos=true;
   });
   if(!hasPhotos){alert('저장된 사진이 없습니다.');return;}
   const blob=await zip.generateAsync({type:'blob'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='이예랑_티켓사진.zip';a.click();URL.revokeObjectURL(url);
@@ -771,11 +831,61 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.getElementById('tab-gantt').classList.toggle('hidden',tab!=='gantt');
     document.getElementById('tab-list').classList.toggle('hidden',tab!=='list');
     document.getElementById('tab-record').classList.toggle('hidden',tab!=='record');
+    document.getElementById('tab-settings').classList.toggle('hidden',tab!=='settings');
     document.getElementById('gc').classList.toggle('hidden',tab!=='gantt');
     document.getElementById('lc').classList.toggle('hidden',tab!=='list');
     document.getElementById('rc').classList.toggle('hidden',tab!=='record');
-    if(tab==='gantt')render();if(tab==='list')renderList();if(tab==='record')renderRecord();
+    if(tab==='gantt')render();
+    if(tab==='list')renderList();
+    if(tab==='record')renderRecord();
+    if(tab==='settings')renderSettings();
   });
+});
+
+// Settings
+function renderSettings(){
+  const viewed=gv(),recs=gr(),favs=getFavs();
+  const viewedCnt=Object.keys(viewed).length;
+  let showCnt=0,recCnt=0,photoCnt=0;
+  Object.values(recs).forEach(arr=>{if(arr&&arr.length){showCnt++;recCnt+=arr.length;photoCnt+=arr.filter(e=>e.photo).length;}});
+  document.getElementById('st-stats').innerHTML=`
+    <div class="st-stat"><span>관람 체크 공연</span><span class="st-stat-val">${viewedCnt}개</span></div>
+    <div class="st-stat"><span>관람 기록</span><span class="st-stat-val">${showCnt}개 공연 / 총 ${recCnt}회</span></div>
+    <div class="st-stat"><span>첨부 사진</span><span class="st-stat-val">${photoCnt}장</span></div>
+    <div class="st-stat"><span>즐겨찾기 공연장</span><span class="st-stat-val">${favs.size}개</span></div>`;
+}
+document.getElementById('st-export').addEventListener('click',()=>{
+  const data={version:'1',exportedAt:TI,viewed:gv(),records:gr(),fav_venues:[...getFavs()]};
+  const json=JSON.stringify(data,null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+  a.download=`이예랑_관람데이터_${TI}.json`;a.click();
+});
+document.getElementById('st-import').addEventListener('click',()=>document.getElementById('st-import-file').click());
+document.getElementById('st-import-file').addEventListener('change',function(){
+  const f=this.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.version||!data.viewed)throw new Error('invalid');
+      const recs=data.records||{};
+      const recCnt=Object.values(recs).reduce((t,a)=>t+(a?a.length:0),0);
+      const msg=`불러오기하면 현재 기기의 데이터가 덮어씌워집니다.\n\n관람 체크: ${Object.keys(data.viewed).length}개\n관람 기록: ${recCnt}회\n즐겨찾기: ${(data.fav_venues||[]).length}개\n\n계속하시겠습니까?`;
+      if(!confirm(msg)){this.value='';return;}
+      sv(data.viewed);sr(recs);saveFavs(new Set(data.fav_venues||[]));
+      alert('데이터를 성공적으로 불러왔습니다.');
+      renderSettings();
+    }catch{alert('올바른 형식의 파일이 아닙니다.');}
+    this.value='';
+  };
+  reader.readAsText(f);
+});
+document.getElementById('st-clear').addEventListener('click',()=>{
+  if(!confirm('모든 관람 기록·사진·즐겨찾기가 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?'))return;
+  localStorage.removeItem(VK);localStorage.removeItem(RK);localStorage.removeItem(FK);
+  alert('모든 개인 데이터가 삭제되었습니다.');
+  renderSettings();
 });
 
 // Event listeners
