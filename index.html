@@ -174,6 +174,9 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 #mrecdates{display:flex;flex-wrap:wrap;gap:4px;}
 .mdrec{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);padding:3px 9px;border-radius:12px;}
 .mdrec.hp{color:var(--accent);border-color:rgba(139,124,248,.4);cursor:pointer;}
+.mrec-del{background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;opacity:0.4;padding:0 1px;margin-left:1px;line-height:1;border-radius:3px;flex-shrink:0;}
+.mrec-del:hover{opacity:1;color:#f46c6c;}
+.cam-badge{font-size:11px;margin-left:3px;opacity:0.75;}
 .mbtns{display:flex;gap:8px;margin-top:16px;}
 #mcls{flex:1;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:14px;cursor:pointer;}
 #madd{flex:2;padding:11px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
@@ -472,7 +475,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v23';const APP_DATE='2026.06.10';
+const APP_VER='v24';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -730,7 +733,8 @@ function renderRecord(){
     tdPeriod.innerHTML=`<div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div>`;tr.appendChild(tdPeriod);
     // 관람 (횟수만, 사진수 없음)
     const tdCnt=document.createElement('td');
-    tdCnt.innerHTML=`${realEntries.length?`<span class="rcnt">${realEntries.length}회</span>`:''}${giftEntries.length?`<span class="gift-badge" style="margin-left:${realEntries.length?'4px':'0'}">나눔${giftEntries.length}</span>`:''}`;tr.appendChild(tdCnt);
+    const hasPhoto=realEntries.some(e=>e.photo);
+    tdCnt.innerHTML=`${realEntries.length?`<span class="rcnt">${realEntries.length}회</span>`:''}${hasPhoto?'<span class="cam-badge">📷</span>':''}${giftEntries.length?`<span class="gift-badge" style="margin-left:${realEntries.length?'4px':'0'}">나눔${giftEntries.length}</span>`:''}`;tr.appendChild(tdCnt);
     // 관람일 (대표 날짜)
     const tdDates=document.createElement('td');
     tdDates.innerHTML=`<span style="font-size:12px;color:var(--text2)">${fd(repDate)||'-'}</span>`;
@@ -780,8 +784,18 @@ function updModal(s){
   const recs=gsr(s),wrap=document.getElementById('mrecdates');wrap.innerHTML='';
   recs.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
     const p=document.createElement('span');p.className='mdrec'+(e.photo?' hp':'');
-    p.innerHTML=(e.photo?'📷 ':'')+fd(e.date)+(e.gift?'<span class="gift-badge">나눔</span>':'');
-    if(e.photo)p.addEventListener('click',()=>showPhoto(e.photo.dataUrl));
+    const ct=document.createElement('span');
+    ct.innerHTML=(e.photo?'📷 ':'')+fd(e.date)+(e.gift?'<span class="gift-badge">나눔</span>':'');
+    if(e.photo)ct.addEventListener('click',()=>showPhoto(e.photo.dataUrl));
+    const del=document.createElement('button');del.className='mrec-del';del.textContent='×';
+    del.addEventListener('click',ev=>{
+      ev.stopPropagation();
+      delRec(s,e.id);updModal(s);updECnt();
+      if(curTab==='gantt')render();
+      if(curTab==='list')renderList();
+      if(curTab==='record')renderRecord();
+    });
+    p.appendChild(ct);p.appendChild(del);
     wrap.appendChild(p);
   });
 }
@@ -872,13 +886,16 @@ document.getElementById('po').addEventListener('click',e=>{if(e.target===documen
 document.getElementById('csv-btn').addEventListener('click',()=>{
   const groups=buildShowGroups();
   if(!groups.length){alert('저장된 관람 기록이 없습니다.');return;}
+  const photoG=groups.filter(g=>g.entries.some(e=>e.photo));
+  const noPhotoG=groups.filter(g=>!g.entries.some(e=>e.photo));
+  const ordered=[...photoG,...noPhotoG];
   const rows=[['순번','공연명','관람일','사진파일명','관람횟수']];
-  groups.forEach((g,i)=>{
-    const n=i+1;
-    const repPhoto=g.entries.filter(e=>e.photo)[0]||null;
-    const ext=repPhoto?.photo?.ext||'jpg';
-    const fname=repPhoto?`이예랑_${String(n).padStart(3,'0')}_${g.code}.${ext}`:'';
-    rows.push([n,g.s.name,g.repDate,fname,g.entries.length]);
+  let pi=0;
+  ordered.forEach((g,i)=>{
+    const hasPhoto=g.entries.some(e=>e.photo);
+    let fname='';
+    if(hasPhoto){pi++;const rp=g.entries.filter(e=>e.photo)[0];fname=`이예랑_${String(pi).padStart(3,'0')}_${g.code}.${rp?.photo?.ext||'jpg'}`;}
+    rows.push([i+1,g.s.name,g.repDate,fname,g.entries.length]);
   });
   const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='이예랑_관람기록.csv';a.click();
@@ -886,17 +903,15 @@ document.getElementById('csv-btn').addEventListener('click',()=>{
 document.getElementById('zip-btn').addEventListener('click',async()=>{
   if(typeof JSZip==='undefined'){alert('ZIP 라이브러리를 불러오지 못했습니다. 온라인 상태에서 다시 시도해주세요.');return;}
   const groups=buildShowGroups();
-  const zip=new JSZip();let hasPhotos=false;
-  groups.forEach((g,gi)=>{
+  const photoG=groups.filter(g=>g.entries.some(e=>e.photo));
+  if(!photoG.length){alert('저장된 사진이 없습니다.');return;}
+  const zip=new JSZip();
+  photoG.forEach((g,gi)=>{
     const n=gi+1;
-    // 가장 빠른 관람일의 사진 1장만 포함
-    const firstPhoto=g.entries.filter(e=>e.photo)[0]||null;
-    if(!firstPhoto)return;
+    const firstPhoto=g.entries.filter(e=>e.photo)[0];
     const ext=firstPhoto.photo.ext||'jpg';
-    const nm=`이예랑_${String(n).padStart(3,'0')}_${g.code}.${ext}`;
-    zip.file(nm,firstPhoto.photo.dataUrl.split(',')[1],{base64:true});hasPhotos=true;
+    zip.file(`이예랑_${String(n).padStart(3,'0')}_${g.code}.${ext}`,firstPhoto.photo.dataUrl.split(',')[1],{base64:true});
   });
-  if(!hasPhotos){alert('저장된 사진이 없습니다.');return;}
   const blob=await zip.generateAsync({type:'blob'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='이예랑_티켓사진.zip';a.click();URL.revokeObjectURL(url);
 });
 
