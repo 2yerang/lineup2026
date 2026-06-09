@@ -1,4 +1,4 @@
-const CACHE = 'lineup2026-v4';
+const CACHE = 'lineup2026-v5';
 const BASE = '/lineup2026';
 const ASSETS = [BASE + '/', BASE + '/index.html', BASE + '/data/shows.js'];
 

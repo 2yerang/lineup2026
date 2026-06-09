@@ -120,29 +120,29 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .upcoming{background:rgba(139,124,248,.18);color:#a898ff;}
 
 /* Record tab */
-#rec-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px;}
-.rec-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden;}
-.rec-head{display:flex;align-items:center;gap:9px;padding:12px 14px 7px;}
-.rdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.rname{font-size:14px;font-weight:700;color:var(--text1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.rcnt{font-size:11px;padding:2px 8px;background:rgba(139,124,248,.15);color:var(--accent);border-radius:10px;white-space:nowrap;}
-.radd{background:none;border:1px solid rgba(139,124,248,.4);color:var(--accent);padding:4px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+#rec-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.rec-tbl{width:100%;border-collapse:collapse;}
+.rec-tbl th{position:sticky;top:0;z-index:5;background:var(--bg2);padding:10px 14px;font-size:11px;font-weight:600;color:var(--text2);text-align:left;border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.rec-tbl td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.rec-row:hover{background:rgba(255,255,255,.03);}
+.rdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.rcnt{font-size:11px;padding:2px 8px;background:rgba(139,124,248,.15);color:var(--accent);border-radius:10px;white-space:nowrap;display:inline-block;}
+.radd{background:none;border:1px solid rgba(139,124,248,.4);color:var(--accent);padding:3px 9px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;}
 .radd:hover{background:rgba(139,124,248,.1);}
-.rvenue{font-size:12px;color:var(--text2);padding:0 14px 8px;}
-.rpdates{display:flex;flex-wrap:wrap;gap:6px;padding:4px 14px 10px;}
-.dchip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);}
-.dchip.hp{color:var(--accent);border-color:rgba(139,124,248,.4);cursor:pointer;}
-.dchip.hp:hover{background:rgba(139,124,248,.08);}
-.rexpand{border-top:1px solid var(--border);}
-.rexp-btn{width:100%;background:none;border:none;color:var(--text2);padding:7px;font-size:11px;cursor:pointer;text-align:center;}
-.rexp-btn:hover{background:rgba(255,255,255,.03);}
-.rentries{display:none;}
-.rentries.open{display:block;}
-.rentry{display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid var(--border);}
+.rexp{background:none;border:1px solid var(--border);color:var(--text2);padding:3px 8px;border-radius:7px;font-size:11px;cursor:pointer;white-space:nowrap;}
+.rexp:hover{background:var(--border);}
+.dchip{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:var(--bg3);border:1px solid rgba(139,124,248,.4);border-radius:12px;font-size:11px;color:var(--accent);cursor:pointer;white-space:nowrap;}
+.dchip:hover{background:rgba(139,124,248,.08);}
+.rec-detail-row{display:none;}
+.rec-detail-row.open{display:table-row;}
+.rec-detail-td{background:var(--bg);padding:0!important;}
+.rec-entries-inner{padding:8px 14px 10px;display:flex;flex-direction:column;gap:0;}
+.rentry{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
+.rentry:last-child{border-bottom:none;}
 .edate{font-size:13px;color:var(--text1);flex:1;}
-.ephoto{background:none;border:none;font-size:15px;cursor:pointer;color:var(--accent);padding:2px 6px;border-radius:6px;}
+.ephoto{background:none;border:none;font-size:14px;cursor:pointer;color:var(--accent);padding:2px 6px;border-radius:6px;}
 .ephoto:hover{background:rgba(139,124,248,.1);}
-.edel{background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:6px;}
+.edel{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:2px 6px;border-radius:6px;}
 .edel:hover{color:#ff5f5f;background:rgba(255,95,95,.1);}
 .empty-st{display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text2);gap:10px;font-size:14px;text-align:center;}
 .empty-st.show{display:flex;}
@@ -174,9 +174,10 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 #arm{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:24px;width:min(400px,92vw);}
 #arm h3{font-size:15px;font-weight:700;margin-bottom:4px;}
 #armshow{font-size:12px;color:var(--text2);margin-bottom:18px;}
-.afl{font-size:11px;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;}
+.afl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
 .aff{margin-bottom:14px;}
-#ardate{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text1);padding:10px 12px;border-radius:8px;font-size:14px;outline:none;}
+.aff-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+#ardate{background:var(--bg3);border:1px solid var(--border);color:var(--text1);padding:7px 12px;border-radius:8px;font-size:14px;outline:none;}
 .pzone{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;color:var(--text2);font-size:13px;transition:border-color .15s,color .15s;}
 .pzone:hover{border-color:var(--accent);color:var(--accent);}
 .pzone.filled{border-color:var(--accent);color:var(--accent);}
@@ -298,7 +299,18 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 
 <!-- 기록 -->
 <div id="tab-record" class="tab-content hidden">
-  <div id="rec-scroll">
+  <div id="rec-wrap">
+    <table class="rec-tbl">
+      <thead><tr>
+        <th>공연명</th>
+        <th style="width:84px">상태</th>
+        <th>극장</th>
+        <th style="width:64px">관람</th>
+        <th>사진 증빙 날짜</th>
+        <th style="width:110px"></th>
+      </tr></thead>
+      <tbody id="rec-tbody"></tbody>
+    </table>
     <div id="rempty" class="empty-st show">
       <span>📋</span>
       <span>관람 기록이 없습니다</span>
@@ -339,7 +351,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
   <div id="arm">
     <h3>관람 기록 추가</h3>
     <div id="armshow"></div>
-    <div class="aff"><label class="afl" for="ardate">관람일</label><input type="date" id="ardate"></div>
+    <div class="aff-row"><label class="afl" for="ardate">관람일</label><input type="date" id="ardate"></div>
     <div class="aff">
       <label class="afl">티켓 사진 (선택)</label>
       <div class="pzone" id="pzone">📷 사진 선택 또는 촬영</div>
@@ -520,8 +532,8 @@ function renderList(){
 
 function renderRecord(){
   const q=document.getElementById('qr').value.trim().toLowerCase();
-  const allR=gr();const scroll=document.getElementById('rec-scroll');
-  scroll.querySelectorAll('.rec-card').forEach(el=>el.remove());
+  const allR=gr();
+  const tbody=document.getElementById('rec-tbody');tbody.innerHTML='';
   const empty=document.getElementById('rempty');
   let keys=Object.keys(allR).filter(k=>allR[k]&&allR[k].length>0);
   if(q)keys=keys.filter(k=>{const s=SM[k];return s&&s.name.toLowerCase().includes(q);});
@@ -532,30 +544,50 @@ function renderRecord(){
     const s=SM[k];if(!s)return;
     const entries=(allR[k]||[]).sort((a,b)=>b.date.localeCompare(a.date));
     const pe=entries.filter(e=>e.photo);
-    const card=document.createElement('div');card.className='rec-card';
-    const head=document.createElement('div');head.className='rec-head';
-    head.innerHTML=`<div class="rdot" style="background:${bc(s)}"></div><span class="rname">${s.name}</span><span class="rcnt">${entries.length}회</span>`;
-    const ab=document.createElement('button');ab.className='radd';ab.textContent='+ 추가';
-    ab.addEventListener('click',e=>{e.stopPropagation();openAR(s);});head.appendChild(ab);card.appendChild(head);
-    const vline=document.createElement('div');vline.className='rvenue';vline.textContent=vd(s.facility,s.hall)+' · '+(s.region||'');card.appendChild(vline);
+    // Main row
+    const tr=document.createElement('tr');tr.className='rec-row';
+    // 공연명
+    const tdName=document.createElement('td');
+    tdName.innerHTML=`<div class="cell-name"><div class="rdot" style="background:${bc(s)}"></div><span class="ntext">${s.name}</span></div>`;
+    tr.appendChild(tdName);
+    // 상태
+    const tdSt=document.createElement('td');
+    tdSt.innerHTML=`<span class="sbadge ${gst(s)}">${SL[gst(s)]}</span>`;tr.appendChild(tdSt);
+    // 극장
+    const tdVn=document.createElement('td');tdVn.className='col-venue';tdVn.textContent=vd(s.facility,s.hall);tr.appendChild(tdVn);
+    // 관람
+    const tdCnt=document.createElement('td');
+    tdCnt.innerHTML=`<span class="rcnt">${entries.length}회</span>${pe.length>0?` <span style="font-size:10px;color:var(--text2)">📷${pe.length}</span>`:''}`;tr.appendChild(tdCnt);
+    // 사진 증빙 날짜 chips
+    const tdDates=document.createElement('td');
     if(pe.length>0){
-      const pd=document.createElement('div');pd.className='rpdates';
-      pe.forEach(e=>{const chip=document.createElement('span');chip.className='dchip hp';chip.innerHTML='📷 '+fds(e.date);chip.addEventListener('click',()=>showPhoto(e.photo.dataUrl));pd.appendChild(chip);});
-      card.appendChild(pd);
+      const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-wrap:wrap;gap:4px;';
+      pe.forEach(e=>{const chip=document.createElement('span');chip.className='dchip';chip.textContent='📷 '+fds(e.date);chip.addEventListener('click',ev=>{ev.stopPropagation();showPhoto(e.photo.dataUrl);});wrap.appendChild(chip);});
+      tdDates.appendChild(wrap);
     }
-    const ea=document.createElement('div');ea.className='rexpand';
-    const eb=document.createElement('button');eb.className='rexp-btn';eb.textContent=`▼ 전체 ${entries.length}건 보기`;
-    const ed2=document.createElement('div');ed2.className='rentries';
+    tr.appendChild(tdDates);
+    // 액션
+    const tdAct=document.createElement('td');
+    const addBtn=document.createElement('button');addBtn.className='radd';addBtn.textContent='+ 추가';
+    addBtn.addEventListener('click',e=>{e.stopPropagation();openAR(s);});
+    const expBtn=document.createElement('button');expBtn.className='rexp';expBtn.textContent='▼';expBtn.style.marginLeft='4px';
+    tdAct.appendChild(addBtn);tdAct.appendChild(expBtn);tr.appendChild(tdAct);
+    tbody.appendChild(tr);
+    // Detail row
+    const detailTr=document.createElement('tr');detailTr.className='rec-detail-row';
+    const detailTd=document.createElement('td');detailTd.className='rec-detail-td';detailTd.colSpan=6;
+    const inner=document.createElement('div');inner.className='rec-entries-inner';
     entries.forEach(e=>{
       const row=document.createElement('div');row.className='rentry';
       row.innerHTML=`<span class="edate">${fd(e.date)}${e.photo?' 📷':''}</span>`;
       if(e.photo){const pb=document.createElement('button');pb.className='ephoto';pb.title='사진 보기';pb.textContent='🖼';pb.addEventListener('click',()=>showPhoto(e.photo.dataUrl));row.appendChild(pb);}
       const db=document.createElement('button');db.className='edel';db.title='삭제';db.textContent='✕';
       db.addEventListener('click',()=>{if(!confirm('이 관람 기록을 삭제하시겠습니까?'))return;delRec(s,e.id);renderRecord();if(ov.classList.contains('open')&&curShow&&sk(curShow)===sk(s))updModal(s);});
-      row.appendChild(db);ed2.appendChild(row);
+      row.appendChild(db);inner.appendChild(row);
     });
-    eb.addEventListener('click',()=>{const op=ed2.classList.toggle('open');eb.textContent=op?`▲ 접기`:`▼ 전체 ${entries.length}건 보기`;});
-    ea.appendChild(eb);ea.appendChild(ed2);card.appendChild(ea);scroll.insertBefore(card,empty);
+    detailTd.appendChild(inner);detailTr.appendChild(detailTd);tbody.appendChild(detailTr);
+    expBtn.addEventListener('click',e=>{e.stopPropagation();const op=detailTr.classList.toggle('open');expBtn.textContent=op?'▲':'▼';});
+    tr.addEventListener('click',e=>{if(e.target.closest('.radd,.rexp,.dchip'))return;openModal(s);});
   });
 }
 
