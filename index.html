@@ -114,7 +114,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .ebadge{display:inline-block;padding:2px 7px;border-radius:10px;flex-shrink:0;font-size:10px;font-weight:700;background:rgba(255,160,50,.18);color:#ffa030;}
 .gift-badge{display:inline-block;padding:1px 5px;border-radius:8px;font-size:10px;font-weight:700;background:rgba(80,168,112,.18);color:#3a9960;margin-left:4px;flex-shrink:0;}
 .gift-cnt{font-size:11px;color:#3a9960;margin-left:3px;}
-#gfav-f{padding:4px 8px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;white-space:nowrap;}
+#gfav-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;align-self:stretch;}
 #gfav-f.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 .col-venue{font-size:12px;color:var(--text2);}
 .col-dates{font-size:12px;color:var(--text2);white-space:nowrap;}
@@ -282,7 +282,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <select id="rg"><option value="">전체 지역</option></select>
       <select id="gst-f"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
       <select id="gvw-f"><option value="">관람 전체</option><option value="unviewed">미관람</option><option value="viewed">관람</option><option value="wish">위시리스트</option></select>
-      <button id="gfav-f">★ 즐찾만</button>
+      <button id="gfav-f" title="즐겨찾기 극장만">★</button>
       <input type="search" id="sg" placeholder="공연명 · 극장" autocomplete="off" spellcheck="false">
       <div id="zoom-wrap">
         <div id="zoom-ctrl">
@@ -472,7 +472,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v18';const APP_DATE='2026.06.10';
+const APP_VER='v22';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -861,10 +861,7 @@ document.getElementById('eo').addEventListener('click',e=>{if(e.target===documen
 function updECnt(){
   const ongoing=SHOWS.filter(s=>gst(s)==='ongoing');
   const ending=ongoing.filter(s=>dl(s)<=14&&!iv(s));
-  const endWish=ending.filter(s=>isWish(s));
-  let txt=`공연중 ${ongoing.length}`;
-  if(ending.length)txt+=` · 임박 ${ending.length}${endWish.length?`(위시${endWish.length})`:``}`;
-  document.getElementById('ecnt').textContent=txt;
+  document.getElementById('ecnt').textContent=ending.length;
 }
 
 // Photo viewer
