@@ -376,6 +376,12 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <div id="st-stat-detail"><div class="st-empty">관람 기록이 없습니다</div></div>
     </div>
     <div class="st-section">
+      <h3>앱 업데이트</h3>
+      <p class="st-note">공연 데이터 또는 앱이 업데이트된 경우 아래 버튼으로 즉시 반영할 수 있습니다.</p>
+      <button id="st-update" class="st-btn accent">🔄 지금 업데이트 확인</button>
+      <p id="st-update-msg" style="display:none;margin-top:8px;font-size:12px;color:var(--text3)"></p>
+    </div>
+    <div class="st-section">
       <h3>백업 / 복원</h3>
       <p class="st-note">관람 기록·사진·즐겨찾기를 JSON 파일로 내보내거나, 다른 기기에서 가져올 수 있습니다. 사진이 많으면 파일 크기가 수십 MB가 될 수 있습니다.</p>
       <div class="st-btns">
@@ -949,6 +955,15 @@ function renderStats(){
   }
   document.getElementById('st-stat-detail').innerHTML=h;
 }
+document.getElementById('st-update').addEventListener('click',async()=>{
+  const btn=document.getElementById('st-update'),msg=document.getElementById('st-update-msg');
+  btn.disabled=true;btn.textContent='⏳ 확인 중...';msg.style.display='none';
+  try{
+    if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update();}
+  }catch(e){}
+  msg.style.display='';msg.textContent='최신 버전을 불러오는 중입니다...';
+  setTimeout(()=>location.reload(),400);
+});
 document.getElementById('st-export').addEventListener('click',()=>{
   const data={version:'1',exportedAt:TI,viewed:gv(),records:gr(),fav_venues:[...getFavs()],wishlist:[...getWish()]};
   const json=JSON.stringify(data,null,2);
