@@ -103,6 +103,19 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+#today-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--today);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#today-btn:active { opacity: 0.7; }
 #count-badge {
   font-size: 11px;
   color: var(--text2);
@@ -364,6 +377,7 @@ body {
     <span id="zoom-label">100%</span>
     <button id="zoom-in" title="확대">+</button>
   </div>
+  <button id="today-btn">오늘</button>
   <span id="count-badge"></span>
 </div>
 
@@ -760,24 +774,30 @@ function updateZoom() {
 
 zoomInBtn.addEventListener('click', () => {
   if (zoomIdx >= ZOOM_LEVELS.length - 1) return;
-  const frac = ganttScroll.scrollLeft / (TOTAL_DAYS * dayPx);
+  const centerFrac = (ganttScroll.scrollLeft + ganttScroll.clientWidth / 2) / (TOTAL_DAYS * dayPx);
   zoomIdx++;
   dayPx = ZOOM_LEVELS[zoomIdx];
   buildHeader();
   render();
-  ganttScroll.scrollLeft = frac * (TOTAL_DAYS * dayPx);
+  ganttScroll.scrollLeft = centerFrac * (TOTAL_DAYS * dayPx) - ganttScroll.clientWidth / 2;
   updateZoom();
 });
 
 zoomOutBtn.addEventListener('click', () => {
   if (zoomIdx <= 0) return;
-  const frac = ganttScroll.scrollLeft / (TOTAL_DAYS * dayPx);
+  const centerFrac = (ganttScroll.scrollLeft + ganttScroll.clientWidth / 2) / (TOTAL_DAYS * dayPx);
   zoomIdx--;
   dayPx = ZOOM_LEVELS[zoomIdx];
   buildHeader();
   render();
-  ganttScroll.scrollLeft = frac * (TOTAL_DAYS * dayPx);
+  ganttScroll.scrollLeft = centerFrac * (TOTAL_DAYS * dayPx) - ganttScroll.clientWidth / 2;
   updateZoom();
+});
+
+document.getElementById('today-btn').addEventListener('click', () => {
+  if (today.getFullYear() !== 2026) return;
+  const todayX = dayOf(today) * dayPx;
+  ganttScroll.scrollLeft = todayX - ganttScroll.clientWidth / 2;
 });
 
 // ===== EVENTS =====
