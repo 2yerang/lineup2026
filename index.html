@@ -498,7 +498,7 @@ function gr(){try{return JSON.parse(localStorage.getItem(RK)||'{}')}catch{return
 function sr(r){localStorage.setItem(RK,JSON.stringify(r));}
 function gsr(s){return gr()[sk(s)]||[];}
 function addRec(s,date,photo){const r=gr(),k=sk(s);if(!r[k])r[k]=[];r[k].push({id:(Date.now()).toString(36)+Math.random().toString(36).slice(2),date,photo:photo||null});sr(r);setv(s,true);}
-function delRec(s,id){const r=gr(),k=sk(s);if(!r[k])return;r[k]=r[k].filter(e=>e.id!==id);if(!r[k].length)delete r[k];sr(r);}
+function delRec(s,id){const r=gr(),k=sk(s);if(!r[k])return;r[k]=r[k].filter(e=>e.id!==id);if(!r[k].length){delete r[k];setv(s,false);}sr(r);}
 
 // Populate regions
 const REGS=[...new Set(SHOWS.map(s=>s.region).filter(Boolean))].sort();
@@ -726,7 +726,7 @@ function renderRecord(){
       row.innerHTML=`<span class="edate">${fd(e.date)}${e.photo?' 📷':''}</span>`;
       if(e.photo){const pb=document.createElement('button');pb.className='ephoto';pb.title='사진 보기';pb.textContent='🖼';pb.addEventListener('click',()=>showPhoto(e.photo.dataUrl));row.appendChild(pb);}
       const db=document.createElement('button');db.className='edel';db.title='삭제';db.textContent='✕';
-      db.addEventListener('click',()=>{if(!confirm('이 관람 기록을 삭제하시겠습니까?'))return;delRec(s,e.id);renderRecord();if(ov.classList.contains('open')&&curShow&&sk(curShow)===sk(s))updModal(s);});
+      db.addEventListener('click',()=>{if(!confirm('이 관람 기록을 삭제하시겠습니까?'))return;delRec(s,e.id);updECnt();renderRecord();if(ov.classList.contains('open')&&curShow&&sk(curShow)===sk(s))updModal(s);});
       row.appendChild(db);inner.appendChild(row);
     });
     detailTd.appendChild(inner);detailTr.appendChild(detailTd);tbody.appendChild(detailTr);
