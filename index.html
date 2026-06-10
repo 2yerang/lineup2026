@@ -463,7 +463,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v29';const APP_DATE='2026.06.10';
+const APP_VER='v30';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -705,7 +705,7 @@ function renderRecord(){
   if(fRStat)keys=keys.filter(k=>{const s=SM[k];return s&&gst(s)===fRStat;});
   if(fRVw==='viewed')keys=keys.filter(k=>{const s=SM[k];return s&&iv(s);});
   else if(fRVw==='unviewed')keys=keys.filter(k=>{const s=SM[k];return s&&!iv(s);});
-  if(fRPhoto)keys=keys.filter(k=>allR[k].some(e=>e.photo));
+  if(fRPhoto)keys=keys.filter(k=>!allR[k].some(e=>e.photo));
   empty.classList.toggle('show',keys.length===0);
   if(curTab==='record')cbadge.textContent=keys.length+'개 공연 기록';
   // 오름차순: getRepDate 기준 빠른 날짜 먼저
@@ -719,7 +719,7 @@ function renderRecord(){
     // Main row
     const tr=document.createElement('tr');tr.className='rec-row';
     // 공연명
-    const hasPhoto=realEntries.some(e=>e.photo);
+    const hasPhoto=entries.some(e=>e.photo);
     const tdName=document.createElement('td');
     tdName.innerHTML=`<div class="cell-name"><div class="rdot" style="background:${bc(s)}"></div><span class="ntext">${s.name}</span>${hasPhoto?'<span class="cam-badge">📷</span>':''}</div>`;
     tr.appendChild(tdName);
