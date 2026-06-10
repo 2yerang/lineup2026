@@ -116,6 +116,8 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .gift-cnt{font-size:11px;color:#3a9960;margin-left:3px;}
 #gfav-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;align-self:stretch;}
 #gfav-f.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+#rphoto-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;align-self:stretch;}
+#rphoto-f.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 .col-venue{font-size:12px;color:var(--text2);}
 .col-dates{font-size:12px;color:var(--text2);white-space:nowrap;}
 .col-dur{font-size:11px;color:var(--text3);margin-top:2px;}
@@ -240,11 +242,6 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 #settings-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;display:flex;flex-direction:column;gap:12px;}
 .st-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;}
 .st-section h3{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;}
-.st-stat-grid{display:flex;gap:1px;background:var(--border);border-radius:10px;overflow:hidden;}
-.st-stat-col{flex:1;background:var(--bg3);padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:5px;}
-.st-stat-lbl{font-size:11px;color:var(--text2);text-align:center;white-space:nowrap;}
-.st-stat-num{font-size:22px;font-weight:700;color:var(--accent);line-height:1;}
-.st-stat-unit{font-size:12px;font-weight:600;color:var(--text2);margin-left:2px;}
 .st-note{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;}
 .st-warn{font-size:11px;color:#ffa030;margin-top:10px;line-height:1.5;}
 .st-btns{display:flex;gap:10px;flex-wrap:wrap;}
@@ -254,18 +251,6 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .st-btn.accent:hover{background:rgba(139,124,248,.08);}
 .st-danger{background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.3);color:#ff5050;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;}
 .st-danger:hover{background:rgba(255,80,80,.2);}
-.st-sub-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px;}
-.st-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
-.st-bar-lbl{font-size:11px;color:var(--text2);width:26px;text-align:right;flex-shrink:0;}
-.st-bar-track{flex:1;height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;}
-.st-bar-fill{height:100%;background:var(--accent);border-radius:5px;}
-.st-bar-cnt{font-size:11px;color:var(--text2);min-width:24px;flex-shrink:0;text-align:right;}
-.st-rank-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
-.st-rank-row:last-child{border-bottom:none;}
-.st-rank-n{font-size:11px;color:var(--text3);min-width:14px;text-align:center;flex-shrink:0;}
-.st-rank-nm{flex:1;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.st-rank-cnt{color:var(--accent);font-weight:700;flex-shrink:0;}
-.st-empty{text-align:center;color:var(--text2);padding:20px 0;font-size:13px;}
 </style>
 </head>
 <body>
@@ -305,6 +290,9 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <input type="search" id="ql" placeholder="공연명 · 극장" autocomplete="off" spellcheck="false">
     </div>
     <div id="rc" class="ctrl-grp hidden">
+      <select id="rstat-f"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
+      <select id="rvw-f"><option value="">관람 전체</option><option value="viewed">관람함</option><option value="unviewed">미관람</option></select>
+      <button id="rphoto-f" title="사진 있는 공연만">📷</button>
       <input type="search" id="qr" placeholder="공연명 검색" autocomplete="off" spellcheck="false">
       <button id="csv-btn" class="act-btn">CSV 다운로드</button>
       <button id="zip-btn" class="act-btn">ZIP 다운로드</button>
@@ -378,12 +366,12 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <div id="tab-settings" class="tab-content hidden">
   <div id="settings-scroll">
     <div class="st-section">
-      <h3>데이터 현황</h3>
-      <div id="st-stats"></div>
-    </div>
-    <div class="st-section">
-      <h3>관람 통계</h3>
-      <div id="st-stat-detail"><div class="st-empty">관람 기록이 없습니다</div></div>
+      <h3>닉네임</h3>
+      <p class="st-note">CSV·ZIP·백업 파일명 앞에 사용됩니다.</p>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="st-nick" placeholder="닉네임" maxlength="20" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:14px">
+        <button id="st-nick-save" class="st-btn accent">저장</button>
+      </div>
     </div>
     <div class="st-section">
       <h3>앱 업데이트</h3>
@@ -475,7 +463,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v27';const APP_DATE='2026.06.10';
+const APP_VER='v28';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -511,7 +499,9 @@ const SHOWS=SHOWS_RAW.map(r=>({name:r[0],start:r[1],end:r[2],facility:r[3],hall:
 const SM={};SHOWS.forEach(s=>{SM[sk(s)]=s;});
 
 // Storage
-const VK='lineup2026_viewed',RK='lineup2026_records';
+const VK='lineup2026_viewed',RK='lineup2026_records',NK='lineup2026_nick';
+function getNick(){return localStorage.getItem(NK)||'닉네임';}
+function setNick(v){const t=v.trim();if(t)localStorage.setItem(NK,t);else localStorage.removeItem(NK);}
 function gv(){try{return JSON.parse(localStorage.getItem(VK)||'{}')}catch{return{}}}
 function sv(v){localStorage.setItem(VK,JSON.stringify(v));}
 function iv(s){return!!gv()[sk(s)];}
@@ -692,9 +682,9 @@ function renderList(){
     const tr=document.createElement('tr');tr.className='list-row';
     tr.innerHTML=`<td><div class="vcell"><button class="vbtn${viewed?' on':''}">${viewed?'✓':'○'}</button><button class="wbtn${wish?' on':''}">${wish?'♥':'♡'}</button>${rcnt>0?`<span class="rpill">${rcnt}</span>`:''}</div></td>
       <td><div class="cell-name"><div class="ndot" style="background:${bc(s)}"></div><span class="ntext">${s.name}</span>${soon?`<span class="ebadge">D-${dl2}</span>`:''}</div></td>
-      <td><span class="sbadge ${status}">${SL[status]}</span></td>
+      <td style="text-align:center"><span class="sbadge ${status}">${SL[status]}</span></td>
       <td class="col-venue">${vd(s.facility,s.hall)}</td>
-      <td style="font-size:12px;color:var(--text2)">${s.region||'-'}</td>
+      <td style="font-size:12px;color:var(--text2);text-align:center">${s.region||'-'}</td>
       <td><div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div><div class="col-dur">${d}일</div></td>`;
     tr.querySelector('.wbtn').addEventListener('click',e=>{e.stopPropagation();toggleWish(s);renderList();});
     tr.addEventListener('click',e=>{if(e.target.closest('.wbtn'))return;openModal(s);});
@@ -709,9 +699,15 @@ function renderRecord(){
   const empty=document.getElementById('rempty');
   let keys=Object.keys(allR).filter(k=>allR[k]&&allR[k].length>0);
   if(q)keys=keys.filter(k=>{const s=SM[k];return s&&s.name.toLowerCase().includes(q);});
+  const fRStat=document.getElementById('rstat-f').value;
+  const fRVw=document.getElementById('rvw-f').value;
+  const fRPhoto=document.getElementById('rphoto-f').classList.contains('on');
+  if(fRStat)keys=keys.filter(k=>{const s=SM[k];return s&&gst(s)===fRStat;});
+  if(fRVw==='viewed')keys=keys.filter(k=>{const s=SM[k];return s&&iv(s);});
+  else if(fRVw==='unviewed')keys=keys.filter(k=>{const s=SM[k];return s&&!iv(s);});
+  if(fRPhoto)keys=keys.filter(k=>allR[k].some(e=>e.photo));
   empty.classList.toggle('show',keys.length===0);
-  const realKeyCnt=keys.filter(k=>allR[k].some(e=>!e.gift)).length;
-  if(curTab==='record')cbadge.textContent=realKeyCnt+'개 공연 기록';
+  if(curTab==='record')cbadge.textContent=keys.length+'개 공연 기록';
   // 오름차순: getRepDate 기준 빠른 날짜 먼저
   keys.sort((a,b)=>{const ae=allR[a],be=allR[b];return getRepDate(ae).localeCompare(getRepDate(be));});
   keys.forEach(k=>{
@@ -732,7 +728,7 @@ function renderRecord(){
     tdSt.innerHTML=`<span class="sbadge ${gst(s)}">${SL[gst(s)]}</span>`;tdSt.style.textAlign='center';tr.appendChild(tdSt);
     // 기간 (start ~ end, 일수 없음)
     const tdPeriod=document.createElement('td');
-    tdPeriod.innerHTML=`<div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div>`;tr.appendChild(tdPeriod);
+    tdPeriod.innerHTML=`<div class="col-dates">${fd(s.start)} ~ ${fd(s.end)}</div>`;tdPeriod.style.textAlign='center';tr.appendChild(tdPeriod);
     // 관람 (횟수만, 사진수 없음)
     const tdCnt=document.createElement('td');
     tdCnt.style.cssText='white-space:nowrap;text-align:center';
@@ -740,7 +736,7 @@ function renderRecord(){
     // 관람일 (대표 날짜)
     const tdDates=document.createElement('td');
     tdDates.innerHTML=`<span style="font-size:12px;color:var(--text2)">${fd(repDate)||'-'}</span>`;
-    tr.appendChild(tdDates);
+    tdDates.style.textAlign='center';tr.appendChild(tdDates);
     // 액션
     const tdAct=document.createElement('td');
     const addBtn=document.createElement('button');addBtn.className='radd';addBtn.textContent='+ 추가';
@@ -885,6 +881,9 @@ document.getElementById('pcls').addEventListener('click',()=>document.getElement
 document.getElementById('po').addEventListener('click',e=>{if(e.target===document.getElementById('po'))document.getElementById('po').classList.remove('open');});
 
 // CSV / ZIP
+document.getElementById('rstat-f').addEventListener('change',()=>renderRecord());
+document.getElementById('rvw-f').addEventListener('change',()=>renderRecord());
+document.getElementById('rphoto-f').addEventListener('click',()=>{document.getElementById('rphoto-f').classList.toggle('on');renderRecord();});
 document.getElementById('csv-btn').addEventListener('click',()=>{
   const groups=buildShowGroups();
   if(!groups.length){alert('저장된 관람 기록이 없습니다.');return;}
@@ -896,11 +895,11 @@ document.getElementById('csv-btn').addEventListener('click',()=>{
   ordered.forEach((g,i)=>{
     const hasPhoto=g.entries.some(e=>e.photo);
     let fname='';
-    if(hasPhoto){pi++;const rp=g.entries.filter(e=>e.photo)[0];fname=`이예랑_${String(pi).padStart(3,'0')}_${g.code}.${rp?.photo?.ext||'jpg'}`;}
+    if(hasPhoto){pi++;const rp=g.entries.filter(e=>e.photo)[0];fname=`${getNick()}_${String(pi).padStart(3,'0')}_${g.code}.${rp?.photo?.ext||'jpg'}`;}
     rows.push([i+1,g.s.name,g.repDate,fname,g.entries.length]);
   });
   const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='이예랑_관람기록.csv';a.click();
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`${getNick()}_관람기록.csv`;a.click();
 });
 document.getElementById('zip-btn').addEventListener('click',async()=>{
   if(typeof JSZip==='undefined'){alert('ZIP 라이브러리를 불러오지 못했습니다. 온라인 상태에서 다시 시도해주세요.');return;}
@@ -912,9 +911,9 @@ document.getElementById('zip-btn').addEventListener('click',async()=>{
     const n=gi+1;
     const firstPhoto=g.entries.filter(e=>e.photo)[0];
     const ext=firstPhoto.photo.ext||'jpg';
-    zip.file(`이예랑_${String(n).padStart(3,'0')}_${g.code}.${ext}`,firstPhoto.photo.dataUrl.split(',')[1],{base64:true});
+    zip.file(`${getNick()}_${String(n).padStart(3,'0')}_${g.code}.${ext}`,firstPhoto.photo.dataUrl.split(',')[1],{base64:true});
   });
-  const blob=await zip.generateAsync({type:'blob'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='이예랑_티켓사진.zip';a.click();URL.revokeObjectURL(url);
+  const blob=await zip.generateAsync({type:'blob'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${getNick()}_티켓사진.zip`;a.click();URL.revokeObjectURL(url);
 });
 
 // Tabs
@@ -938,72 +937,11 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 
 // Settings
 function renderSettings(){
+  cbadge.textContent='';
+  document.getElementById('st-nick').value=localStorage.getItem(NK)||'';
   document.getElementById('st-ver').textContent=APP_VER;
   document.getElementById('st-date').textContent=APP_DATE;
   document.getElementById('st-data-date').textContent=SHOWS_META.date+' ('+SHOWS_META.count+'건)';
-  const viewed=gv(),recs=gr();
-  const viewedCnt=Object.keys(viewed).length;
-  let recCnt=0;
-  Object.values(recs).forEach(arr=>{if(arr&&arr.length)recCnt+=arr.filter(e=>!e.gift).length;});
-  document.getElementById('st-stats').innerHTML=`
-    <div class="st-stat-grid">
-      <div class="st-stat-col"><div class="st-stat-lbl">관람체크공연</div><div class="st-stat-num">${viewedCnt}<span class="st-stat-unit">개</span></div></div>
-      <div class="st-stat-col"><div class="st-stat-lbl">관람기록</div><div class="st-stat-num">${recCnt}<span class="st-stat-unit">회</span></div></div>
-    </div>`;
-  renderStats();
-}
-function renderStats(){
-  const recs=gr();
-  const keys=Object.keys(recs).filter(k=>recs[k]&&recs[k].length);
-  if(!keys.length){document.getElementById('st-stat-detail').innerHTML='<div class="st-empty">관람 기록이 없습니다</div>';return;}
-  let showCnt=0,recCnt=0,rewatchCnt=0;
-  const monthly=new Array(13).fill(0);
-  const venueCnt={};
-  const rewatched=[];
-  keys.forEach(k=>{
-    const entries=recs[k];const s=SM[k];
-    const real=entries.filter(e=>!e.gift);
-    if(!real.length)return;
-    showCnt++;recCnt+=real.length;
-    if(real.length>=2){rewatchCnt++;rewatched.push({name:s?s.name:k.split('\x00')[0],cnt:real.length});}
-    real.forEach(e=>{
-      let mi=-1;if(e.date){const pt=e.date.split('-'),y=parseInt(pt[0]),m=parseInt(pt[1]);if(y===2025&&m===12)mi=0;else if(y===2026&&m>=1&&m<=12)mi=m;}
-      if(mi>=0&&mi<=12)monthly[mi]++;
-      if(s){const vk=vd(s.facility,s.hall);venueCnt[vk]=(venueCnt[vk]||0)+1;}
-    });
-  });
-  const venueTop=Object.entries(venueCnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  rewatched.sort((a,b)=>b.cnt-a.cnt);
-  const maxM=Math.max(...monthly,1);
-  let h='';
-  // 요약 그리드
-  h+=`<div class="st-stat-grid" style="margin-bottom:16px">
-    <div class="st-stat-col"><div class="st-stat-lbl">관람공연</div><div class="st-stat-num">${showCnt}<span class="st-stat-unit">개</span></div></div>
-    <div class="st-stat-col"><div class="st-stat-lbl">총관람</div><div class="st-stat-num">${recCnt}<span class="st-stat-unit">회</span></div></div>
-    <div class="st-stat-col"><div class="st-stat-lbl">재관람</div><div class="st-stat-num">${rewatchCnt}<span class="st-stat-unit">편</span></div></div>
-    <div class="st-stat-col"><div class="st-stat-lbl">극장</div><div class="st-stat-num">${Object.keys(venueCnt).length}<span class="st-stat-unit">곳</span></div></div>
-  </div>`;
-  // 월별
-  if(monthly.some(v=>v>0)){
-    h+=`<div class="st-sub-title">월별 관람</div>`;
-    monthly.forEach((cnt,mi)=>{
-      if(!cnt)return;
-      h+=`<div class="st-bar-row"><span class="st-bar-lbl">${MONTH_NAMES[mi]}</span><div class="st-bar-track"><div class="st-bar-fill" style="width:${Math.round(cnt/maxM*100)}%"></div></div><span class="st-bar-cnt">${cnt}회</span></div>`;
-    });
-  }
-  // 자주 간 극장
-  if(venueTop.length){
-    h+=`<div class="st-sub-title">자주 간 극장</div>`;
-    venueTop.forEach(([name,cnt],i)=>{
-      h+=`<div class="st-rank-row"><span class="st-rank-n">${i+1}</span><span class="st-rank-nm">${name}</span><span class="st-rank-cnt">${cnt}회</span></div>`;
-    });
-  }
-  // 재관람 공연
-  if(rewatched.length){
-    h+=`<div class="st-sub-title">재관람 공연</div>`;
-    rewatched.slice(0,5).forEach(r=>{h+=`<div class="st-rank-row"><span class="st-rank-nm">${r.name}</span><span class="st-rank-cnt">${r.cnt}회</span></div>`;});
-  }
-  document.getElementById('st-stat-detail').innerHTML=h;
 }
 document.getElementById('st-update').addEventListener('click',async()=>{
   const btn=document.getElementById('st-update'),msg=document.getElementById('st-update-msg');
@@ -1014,12 +952,17 @@ document.getElementById('st-update').addEventListener('click',async()=>{
   msg.style.display='';msg.textContent='최신 버전을 불러오는 중입니다...';
   setTimeout(()=>location.reload(),400);
 });
+document.getElementById('st-nick-save').addEventListener('click',()=>{
+  const v=document.getElementById('st-nick').value.trim();
+  setNick(v);
+  alert(`닉네임이 '${v||'닉네임'}'(으)로 설정되었습니다.`);
+});
 document.getElementById('st-export').addEventListener('click',()=>{
   const data={version:'1',exportedAt:TI,viewed:gv(),records:gr(),fav_venues:[...getFavs()],wishlist:[...getWish()]};
   const json=JSON.stringify(data,null,2);
   const a=document.createElement('a');
   a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
-  a.download=`이예랑_관람데이터_${TI}.json`;a.click();
+  a.download=`${getNick()}_관람데이터_${TI}.json`;a.click();
 });
 document.getElementById('st-import').addEventListener('click',()=>document.getElementById('st-import-file').click());
 document.getElementById('st-import-file').addEventListener('change',function(){
