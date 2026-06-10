@@ -42,7 +42,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 }
 #header input::placeholder{text-align:center;color:var(--text3);}
 #rg{width:82px;}#sg{width:144px;}
-#rl{width:80px;}#sl{width:78px;}#vl{width:80px;}#ul{width:88px;}#ol{width:106px;}#ql{width:136px;}
+#rl{width:80px;}#sl{width:78px;}#ul{width:88px;}#ol{width:106px;}#ql{width:136px;}
 #qr{width:136px;}
 
 /* Zoom */
@@ -116,6 +116,8 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .gift-cnt{font-size:11px;color:#3a9960;margin-left:3px;}
 #gfav-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;align-self:stretch;}
 #gfav-f.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.vw-btn{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;align-self:stretch;white-space:nowrap;}
+.vw-btn[data-vw="viewed"],.vw-btn[data-vw="unviewed"],.vw-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 #rphoto-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;align-self:stretch;white-space:nowrap;}
 #rphoto-f[data-photo="with"]{background:var(--accent);color:#fff;border-color:var(--accent);}
 #rphoto-f[data-photo="without"]{background:var(--accent);color:#fff;border-color:var(--accent);}
@@ -270,7 +272,8 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
     <div id="gc" class="ctrl-grp">
       <select id="rg"><option value="">전체 지역</option></select>
       <select id="gst-f"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
-      <select id="gvw-f"><option value="">관람 전체</option><option value="unviewed">미관람</option><option value="viewed">관람</option><option value="wish">위시리스트</option></select>
+      <button class="vw-btn" id="gvw-f" data-vw="">○ ✓</button>
+      <button class="vw-btn" id="gwish-f" title="위시리스트">♥</button>
       <button id="gfav-f" title="즐겨찾기 극장만">★</button>
       <input type="search" id="sg" placeholder="공연명 · 극장" autocomplete="off" spellcheck="false">
       <div id="zoom-wrap">
@@ -286,14 +289,15 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
     <div id="lc" class="ctrl-grp hidden">
       <select id="rl"><option value="">전체 지역</option></select>
       <select id="sl"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
-      <select id="vl"><option value="">관람 전체</option><option value="viewed">관람</option><option value="unviewed">미관람</option><option value="wish">위시리스트</option></select>
+      <button class="vw-btn" id="lvw-f" data-vw="">○ ✓</button>
+      <button class="vw-btn" id="lwish-f" title="위시리스트">♥</button>
       <select id="ul"><option value="">전체</option><option value="new">신규</option><option value="modified">변경</option><option value="existing">기존</option></select>
       <select id="ol"><option value="status">상태순</option><option value="name">가나다순</option><option value="start-asc">개막일 빠른순</option><option value="start-desc">개막일 늦은순</option><option value="end-asc">폐막일 빠른순</option><option value="end-desc">폐막일 늦은순</option><option value="dur-asc">기간 짧은순</option><option value="dur-desc">기간 긴순</option></select>
       <input type="search" id="ql" placeholder="공연명 · 극장" autocomplete="off" spellcheck="false">
     </div>
     <div id="rc" class="ctrl-grp hidden">
       <select id="rstat-f"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
-      <select id="rvw-f"><option value="">관람 전체</option><option value="viewed">관람함</option><option value="unviewed">미관람</option></select>
+      <button class="vw-btn" id="rvw-f" data-vw="">○ ✓</button>
       <button id="rphoto-f" data-photo="">📷</button>
       <input type="search" id="qr" placeholder="공연명 검색" autocomplete="off" spellcheck="false">
       <button id="csv-btn" class="act-btn">CSV 다운로드</button>
@@ -465,7 +469,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v36';const APP_DATE='2026.06.10';
+const APP_VER='v37';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -673,9 +677,10 @@ vlist.addEventListener('scroll',()=>{if(syncLock)return;syncLock=true;gscroll.sc
 function render(){
   const tot=TOTAL_DAYS*dpx;
   const reg=document.getElementById('rg').value,q=document.getElementById('sg').value.trim().toLowerCase();
-  const fGst=document.getElementById('gst-f').value,fVw=document.getElementById('gvw-f').value;
+  const fGst=document.getElementById('gst-f').value;
+  const fVw=document.getElementById('gvw-f').dataset.vw,fWish=document.getElementById('gwish-f').classList.contains('on');
   const fFav=document.getElementById('gfav-f').classList.contains('on');
-  const fl=SHOWS.filter(s=>{if(reg&&s.region!==reg)return false;if(q&&!(s.name+s.facility+s.hall).toLowerCase().includes(q))return false;if(fGst&&gst(s)!==fGst)return false;if(fVw==='viewed'&&!iv(s))return false;if(fVw==='unviewed'&&iv(s))return false;if(fVw==='wish'&&!isWish(s))return false;return true;});
+  const fl=SHOWS.filter(s=>{if(reg&&s.region!==reg)return false;if(q&&!(s.name+s.facility+s.hall).toLowerCase().includes(q))return false;if(fGst&&gst(s)!==fGst)return false;if(fVw==='viewed'&&!iv(s))return false;if(fVw==='unviewed'&&iv(s))return false;if(fWish&&!isWish(s))return false;return true;});
   const vm=new Map();fl.forEach(s=>{const k=s.facility+'\x00'+s.hall;if(!vm.has(k))vm.set(k,{d:vd(s.facility,s.hall),fac:s.facility,hall:s.hall,shows:[]});vm.get(k).shows.push(s);});
   const favs=getFavs();
   const viewedMap=gv();
@@ -718,11 +723,12 @@ function render(){
 
 function renderList(){
   const reg=document.getElementById('rl').value,st=document.getElementById('sl').value;
-  const vw=document.getElementById('vl').value,upd=document.getElementById('ul').value,sort=document.getElementById('ol').value;
+  const vw=document.getElementById('lvw-f').dataset.vw,wish=document.getElementById('lwish-f').classList.contains('on');
+  const upd=document.getElementById('ul').value,sort=document.getElementById('ol').value;
   const q=document.getElementById('ql').value.trim().toLowerCase();
   let fl=SHOWS.filter(s=>{
     if(reg&&s.region!==reg)return false;if(st&&gst(s)!==st)return false;
-    if(vw==='viewed'&&!iv(s))return false;if(vw==='unviewed'&&iv(s))return false;if(vw==='wish'&&!isWish(s))return false;
+    if(vw==='viewed'&&!iv(s))return false;if(vw==='unviewed'&&iv(s))return false;if(wish&&!isWish(s))return false;
     if(upd==='new'&&!_diff.nk.has(sk(s)))return false;
     if(upd==='modified'&&!_diff.mk.has(sk(s)))return false;
     if(upd==='existing'&&(_diff.nk.has(sk(s))||_diff.mk.has(sk(s))))return false;
@@ -756,7 +762,7 @@ function renderRecord(){
   let keys=Object.keys(allR).filter(k=>allR[k]&&allR[k].length>0);
   if(q)keys=keys.filter(k=>{const s=SM[k];return s&&s.name.toLowerCase().includes(q);});
   const fRStat=document.getElementById('rstat-f').value;
-  const fRVw=document.getElementById('rvw-f').value;
+  const fRVw=document.getElementById('rvw-f').dataset.vw;
   const fRPhoto=document.getElementById('rphoto-f').dataset.photo;
   if(fRStat)keys=keys.filter(k=>{const s=SM[k];return s&&gst(s)===fRStat;});
   if(fRVw==='viewed')keys=keys.filter(k=>{const s=SM[k];return s&&iv(s);});
@@ -938,7 +944,6 @@ document.getElementById('po').addEventListener('click',e=>{if(e.target===documen
 
 // CSV / ZIP
 document.getElementById('rstat-f').addEventListener('change',()=>renderRecord());
-document.getElementById('rvw-f').addEventListener('change',()=>renderRecord());
 document.getElementById('rphoto-f').addEventListener('click',()=>{
   const btn=document.getElementById('rphoto-f');
   const cycle={'':'with','with':'without','without':''};
@@ -1058,9 +1063,23 @@ document.getElementById('zoom-label').addEventListener('click',e=>{e.stopPropaga
 document.addEventListener('click',()=>document.getElementById('zoom-menu').classList.remove('open'));
 document.getElementById('today-btn').addEventListener('click',()=>{const tod=dof(today);if(tod<0)return;gscroll.scrollLeft=tod*dpx-gscroll.clientWidth/2;});
 document.getElementById('rg').addEventListener('change',render);document.getElementById('sg').addEventListener('input',render);
-document.getElementById('gst-f').addEventListener('change',render);document.getElementById('gvw-f').addEventListener('change',render);
+document.getElementById('gst-f').addEventListener('change',render);
+(function(){
+  const VW_CYCLE={'':'viewed','viewed':'unviewed','unviewed':''};
+  const VW_LABEL={'':'○ ✓','viewed':'✓','unviewed':'○'};
+  ['gvw-f','lvw-f','rvw-f'].forEach(id=>{
+    document.getElementById(id).addEventListener('click',()=>{
+      const btn=document.getElementById(id);
+      const next=VW_CYCLE[btn.dataset.vw];
+      btn.dataset.vw=next;btn.textContent=VW_LABEL[next];
+      if(id==='gvw-f')render();else if(id==='lvw-f')renderList();else renderRecord();
+    });
+  });
+  document.getElementById('gwish-f').addEventListener('click',()=>{document.getElementById('gwish-f').classList.toggle('on');render();});
+  document.getElementById('lwish-f').addEventListener('click',()=>{document.getElementById('lwish-f').classList.toggle('on');renderList();});
+})();
 document.getElementById('gfav-f').addEventListener('click',()=>{document.getElementById('gfav-f').classList.toggle('on');render();});
-['rl','sl','vl','ul','ol'].forEach(id=>document.getElementById(id).addEventListener('change',renderList));
+['rl','sl','ul','ol'].forEach(id=>document.getElementById(id).addEventListener('change',renderList));
 document.getElementById('ql').addEventListener('input',renderList);
 document.getElementById('qr').addEventListener('input',renderRecord);
 
