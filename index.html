@@ -42,7 +42,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 }
 #header input::placeholder{text-align:center;color:var(--text3);}
 #rg{width:82px;}#sg{width:144px;}
-#rl{width:80px;}#sl{width:78px;}#vl{width:80px;}#ol{width:106px;}#ql{width:136px;}
+#rl{width:80px;}#sl{width:78px;}#vl{width:80px;}#ul{width:88px;}#ol{width:106px;}#ql{width:136px;}
 #qr{width:136px;}
 
 /* Zoom */
@@ -287,6 +287,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <select id="rl"><option value="">전체 지역</option></select>
       <select id="sl"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
       <select id="vl"><option value="">관람 전체</option><option value="viewed">관람</option><option value="unviewed">미관람</option><option value="wish">위시리스트</option></select>
+      <select id="ul"><option value="">전체</option><option value="new">신규</option><option value="modified">변경</option><option value="existing">기존</option></select>
       <select id="ol"><option value="status">상태순</option><option value="name">가나다순</option><option value="start-asc">개막일 빠른순</option><option value="start-desc">개막일 늦은순</option><option value="end-asc">폐막일 빠른순</option><option value="end-desc">폐막일 늦은순</option><option value="dur-asc">기간 짧은순</option><option value="dur-desc">기간 긴순</option></select>
       <input type="search" id="ql" placeholder="공연명 · 극장" autocomplete="off" spellcheck="false">
     </div>
@@ -464,7 +465,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v35';const APP_DATE='2026.06.10';
+const APP_VER='v36';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -499,7 +500,21 @@ function dur(s){const a=pi(s.start),b=pi(s.end);return a&&b?Math.round((b-a)/864
 
 const SHOWS=SHOWS_RAW.map(r=>({name:r[0],start:r[1],end:r[2],facility:r[3],hall:r[4],region:r[5]}));
 const SM={};SHOWS.forEach(s=>{SM[sk(s)]=s;});
-const _keepVenue=new Set(),_keepName=new Set();
+const _keepVenue=new Set(),_keepName=new Set(),_diff=(()=>{
+  const SNAP='lineup2026_snap';
+  function fp(s){return s.start+'|'+s.end+'|'+s.region;}
+  let snap;try{snap=JSON.parse(localStorage.getItem(SNAP));}catch{}
+  // must build cur after SHOWS is defined — hoisted here but populated after IIFE runs
+  return{_init(){
+    const cur={};SHOWS.forEach(s=>{cur[sk(s)]=fp(s);});
+    if(!snap){localStorage.setItem(SNAP,JSON.stringify({ver:SHOWS_META.date,shows:cur,nk:[],mk:[]}));this.nk=new Set();this.mk=new Set();return;}
+    if(snap.ver===SHOWS_META.date){this.nk=new Set(snap.nk||[]);this.mk=new Set(snap.mk||[]);return;}
+    const prev=snap.shows||{},nk=[],mk=[];
+    SHOWS.forEach(s=>{const k=sk(s);if(!prev[k])nk.push(k);else if(prev[k]!==fp(s))mk.push(k);});
+    localStorage.setItem(SNAP,JSON.stringify({ver:SHOWS_META.date,shows:cur,nk,mk}));
+    this.nk=new Set(nk);this.mk=new Set(mk);
+  },nk:new Set(),mk:new Set()};
+})();
 (()=>{
   const fg=new Map(),hg=new Map(),ng=new Map();
   SHOWS.forEach(s=>{
@@ -514,6 +529,7 @@ const _keepVenue=new Set(),_keepName=new Set();
   hg.forEach(v=>{if(v.size>1)v.forEach(x=>_keepVenue.add(x));});
   ng.forEach(v=>{if(v.size>1)v.forEach(x=>_keepName.add(x));});
 })();
+_diff._init();
 
 // Storage
 const VK='lineup2026_viewed',RK='lineup2026_records',NK='lineup2026_nick';
@@ -702,11 +718,14 @@ function render(){
 
 function renderList(){
   const reg=document.getElementById('rl').value,st=document.getElementById('sl').value;
-  const vw=document.getElementById('vl').value,sort=document.getElementById('ol').value;
+  const vw=document.getElementById('vl').value,upd=document.getElementById('ul').value,sort=document.getElementById('ol').value;
   const q=document.getElementById('ql').value.trim().toLowerCase();
   let fl=SHOWS.filter(s=>{
     if(reg&&s.region!==reg)return false;if(st&&gst(s)!==st)return false;
     if(vw==='viewed'&&!iv(s))return false;if(vw==='unviewed'&&iv(s))return false;if(vw==='wish'&&!isWish(s))return false;
+    if(upd==='new'&&!_diff.nk.has(sk(s)))return false;
+    if(upd==='modified'&&!_diff.mk.has(sk(s)))return false;
+    if(upd==='existing'&&(_diff.nk.has(sk(s))||_diff.mk.has(sk(s))))return false;
     if(q&&!(s.name+s.facility+s.hall).toLowerCase().includes(q))return false;return true;
   });
   const so={ongoing:0,upcoming:1,ended:2};
@@ -1041,7 +1060,7 @@ document.getElementById('today-btn').addEventListener('click',()=>{const tod=dof
 document.getElementById('rg').addEventListener('change',render);document.getElementById('sg').addEventListener('input',render);
 document.getElementById('gst-f').addEventListener('change',render);document.getElementById('gvw-f').addEventListener('change',render);
 document.getElementById('gfav-f').addEventListener('click',()=>{document.getElementById('gfav-f').classList.toggle('on');render();});
-['rl','sl','vl','ol'].forEach(id=>document.getElementById(id).addEventListener('change',renderList));
+['rl','sl','vl','ul','ol'].forEach(id=>document.getElementById(id).addEventListener('change',renderList));
 document.getElementById('ql').addEventListener('input',renderList);
 document.getElementById('qr').addEventListener('input',renderRecord);
 
