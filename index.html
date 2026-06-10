@@ -464,7 +464,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v33';const APP_DATE='2026.06.10';
+const APP_VER='v34';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -487,7 +487,8 @@ function dl(s){const e=pi(s.end);return e?Math.ceil((e-today)/86400000):9999;}
 function es(s){return gst(s)==='ongoing'&&dl(s)<=14;}
 function bc(s){const t=gst(s);if(t==='ended')return'#424258';const v=sc(s.name);if(t==='ongoing')return v;const[r,g,b]=h2r(v);return`rgb(${Math.round(r+(255-r)*.52)},${Math.round(g+(255-g)*.52)},${Math.round(b+(255-b)*.52)})`;}
 function btc(s){const t=gst(s);if(t==='ended')return'rgba(255,255,255,.45)';if(t==='upcoming')return'rgba(20,20,40,.75)';return'rgba(255,255,255,.92)';}
-function cn(n){return n.replace(/\s*\(구[^)]+\)/g,'').replace(/\s+/g,' ').trim();}
+function cn(n){return n.replace(/\s*\([^)]*\)/g,'').replace(/\s+/g,' ').trim();}
+function nd(n){return n.replace(/\s*\[[^\]]*\]\s*/g,'').replace(/\s+/g,' ').trim();}
 function vd(f,h){const cf=cn(f),ch=cn(h);return cf===ch?ch:cf+' '+ch;}
 function sk(s){return s.name+'\x00'+s.facility+'\x00'+s.hall;}
 function pi(s){if(!s||s.length<10)return null;const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
@@ -677,7 +678,7 @@ function render(){
       const viewed=!!viewedMap[sk(s)];
       const bar=document.createElement('div');bar.className='show-bar'+(es(s)?' es':'')+(viewed?' vb':'');
       bar.style.cssText=`left:${sx}px;top:${y}px;width:${w}px;height:${h}px;background:${bc(s)};color:${btc(s)}`;
-      if(w>=24)bar.textContent=s.name;bar.title=s.name+' ('+fd(s.start)+'~'+fd(s.end)+')';
+      if(w>=24)bar.textContent=nd(s.name);bar.title=nd(s.name)+' ('+fd(s.start)+'~'+fd(s.end)+')';
       bar.addEventListener('click',()=>openModal(s));gr2.appendChild(bar);
     });
     gbody.appendChild(gr2);
@@ -702,7 +703,7 @@ function renderList(){
     const status=gst(s),soon=es(s),viewed=iv(s),wish=isWish(s),recs=gsr(s),rcnt=recs.length,d=dur(s),dl2=dl(s);
     const tr=document.createElement('tr');tr.className='list-row';
     tr.innerHTML=`<td><div class="vcell"><button class="vbtn${viewed?' on':''}">${viewed?'✓':'○'}</button><button class="wbtn${wish?' on':''}">${wish?'♥':'♡'}</button>${rcnt>0?`<span class="rpill">${rcnt}</span>`:''}</div></td>
-      <td><div class="cell-name"><div class="ndot" style="background:${bc(s)}"></div><span class="ntext">${s.name}</span>${soon?`<span class="ebadge">D-${dl2}</span>`:''}</div></td>
+      <td><div class="cell-name"><div class="ndot" style="background:${bc(s)}"></div><span class="ntext">${nd(s.name)}</span>${soon?`<span class="ebadge">D-${dl2}</span>`:''}</div></td>
       <td style="text-align:center"><span class="sbadge ${status}">${SL[status]}</span></td>
       <td class="col-venue">${vd(s.facility,s.hall)}</td>
       <td style="font-size:12px;color:var(--text2);text-align:center">${s.region||'-'}</td>
@@ -743,7 +744,7 @@ function renderRecord(){
     // 공연명
     const hasPhoto=entries.some(e=>e.photo);
     const tdName=document.createElement('td');
-    tdName.innerHTML=`<div class="cell-name"><div class="rdot" style="background:${bc(s)}"></div><span class="ntext">${s.name}</span>${hasPhoto?'<span class="cam-badge">📷</span>':''}</div>`;
+    tdName.innerHTML=`<div class="cell-name"><div class="rdot" style="background:${bc(s)}"></div><span class="ntext">${nd(s.name)}</span>${hasPhoto?'<span class="cam-badge">📷</span>':''}</div>`;
     tr.appendChild(tdName);
     // 상태
     const tdSt=document.createElement('td');
@@ -788,7 +789,7 @@ function renderRecord(){
 function openModal(s){
   curShow=s;
   document.getElementById('mcolor').style.background=sc(s.name);
-  document.getElementById('mtitle').textContent=s.name;
+  document.getElementById('mtitle').textContent=nd(s.name);
   document.getElementById('mst').innerHTML=`<span class="sbadge ${gst(s)}">${SL[gst(s)]}</span>`;
   document.getElementById('mvn').textContent=vd(s.facility,s.hall);
   document.getElementById('mrg').textContent=s.region||'-';
@@ -874,7 +875,7 @@ function openEnding(){
     if(iv(s))item.style.opacity='.45';
     const cls=s.dlo<=7?'dr':s.dlo<=14?'do':'dg';
     const wTag=isWish(s)?`<span style="color:#f47080;margin-right:3px;font-size:11px">♥</span>`:'';
-    item.innerHTML=`<span class="edays ${cls}">D-${s.dlo}</span><div style="flex:1;overflow:hidden"><div class="ename">${wTag}${s.name}</div><div class="evenue">${vd(s.facility,s.hall)} · ${s.region}</div></div><div class="edate2">${fd(s.end)}</div>`;
+    item.innerHTML=`<span class="edays ${cls}">D-${s.dlo}</span><div style="flex:1;overflow:hidden"><div class="ename">${wTag}${nd(s.name)}</div><div class="evenue">${vd(s.facility,s.hall)} · ${s.region}</div></div><div class="edate2">${fd(s.end)}</div>`;
     item.addEventListener('click',()=>{document.getElementById('eo').classList.remove('open');openModal(s);});
     list.appendChild(item);
   });
