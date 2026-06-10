@@ -116,8 +116,9 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 .gift-cnt{font-size:11px;color:#3a9960;margin-left:3px;}
 #gfav-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;align-self:stretch;}
 #gfav-f.on{background:var(--accent);color:#fff;border-color:var(--accent);}
-#rphoto-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;align-self:stretch;}
-#rphoto-f.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+#rphoto-f{padding:0 10px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;align-self:stretch;white-space:nowrap;}
+#rphoto-f[data-photo="with"]{background:var(--accent);color:#fff;border-color:var(--accent);}
+#rphoto-f[data-photo="without"]{background:var(--accent);color:#fff;border-color:var(--accent);}
 .col-venue{font-size:12px;color:var(--text2);}
 .col-dates{font-size:12px;color:var(--text2);white-space:nowrap;}
 .col-dur{font-size:11px;color:var(--text3);margin-top:2px;}
@@ -292,7 +293,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
     <div id="rc" class="ctrl-grp hidden">
       <select id="rstat-f"><option value="">전체 상태</option><option value="ongoing">공연중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
       <select id="rvw-f"><option value="">관람 전체</option><option value="viewed">관람함</option><option value="unviewed">미관람</option></select>
-      <button id="rphoto-f" title="사진 있는 공연만">📷</button>
+      <button id="rphoto-f" data-photo="">📷</button>
       <input type="search" id="qr" placeholder="공연명 검색" autocomplete="off" spellcheck="false">
       <button id="csv-btn" class="act-btn">CSV 다운로드</button>
       <button id="zip-btn" class="act-btn">ZIP 다운로드</button>
@@ -463,7 +464,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v32';const APP_DATE='2026.06.10';
+const APP_VER='v33';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -721,11 +722,12 @@ function renderRecord(){
   if(q)keys=keys.filter(k=>{const s=SM[k];return s&&s.name.toLowerCase().includes(q);});
   const fRStat=document.getElementById('rstat-f').value;
   const fRVw=document.getElementById('rvw-f').value;
-  const fRPhoto=document.getElementById('rphoto-f').classList.contains('on');
+  const fRPhoto=document.getElementById('rphoto-f').dataset.photo;
   if(fRStat)keys=keys.filter(k=>{const s=SM[k];return s&&gst(s)===fRStat;});
   if(fRVw==='viewed')keys=keys.filter(k=>{const s=SM[k];return s&&iv(s);});
   else if(fRVw==='unviewed')keys=keys.filter(k=>{const s=SM[k];return s&&!iv(s);});
-  if(fRPhoto)keys=keys.filter(k=>!allR[k].some(e=>e.photo));
+  if(fRPhoto==='with')keys=keys.filter(k=>allR[k].some(e=>e.photo));
+  else if(fRPhoto==='without')keys=keys.filter(k=>!allR[k].some(e=>e.photo));
   empty.classList.toggle('show',keys.length===0);
   if(curTab==='record')cbadge.textContent=keys.length+'개 공연 기록';
   // 오름차순: getRepDate 기준 빠른 날짜 먼저
@@ -902,7 +904,14 @@ document.getElementById('po').addEventListener('click',e=>{if(e.target===documen
 // CSV / ZIP
 document.getElementById('rstat-f').addEventListener('change',()=>renderRecord());
 document.getElementById('rvw-f').addEventListener('change',()=>renderRecord());
-document.getElementById('rphoto-f').addEventListener('click',()=>{document.getElementById('rphoto-f').classList.toggle('on');renderRecord();});
+document.getElementById('rphoto-f').addEventListener('click',()=>{
+  const btn=document.getElementById('rphoto-f');
+  const cycle={'':'with','with':'without','without':''};
+  const label={'':'📷','with':'📷 등록','without':'📷 미등록'};
+  const next=cycle[btn.dataset.photo];
+  btn.dataset.photo=next;btn.textContent=label[next];
+  renderRecord();
+});
 document.getElementById('csv-btn').addEventListener('click',()=>{
   const groups=buildShowGroups();
   if(!groups.length){alert('저장된 관람 기록이 없습니다.');return;}
