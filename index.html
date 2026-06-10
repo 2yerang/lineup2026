@@ -463,7 +463,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v28';const APP_DATE='2026.06.10';
+const APP_VER='v29';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -928,6 +928,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.getElementById('gc').classList.toggle('hidden',tab!=='gantt');
     document.getElementById('lc').classList.toggle('hidden',tab!=='list');
     document.getElementById('rc').classList.toggle('hidden',tab!=='record');
+    document.getElementById('ending-btn').style.display=tab==='settings'?'none':'';
     if(tab==='gantt')render();
     if(tab==='list')renderList();
     if(tab==='record')renderRecord();
