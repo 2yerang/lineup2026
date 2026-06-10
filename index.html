@@ -335,9 +335,9 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <thead><tr>
         <th style="width:86px"></th>
         <th>공연명</th>
-        <th style="width:84px">상태</th>
+        <th style="width:84px;text-align:center">상태</th>
         <th>극장</th>
-        <th style="width:56px">지역</th>
+        <th style="width:56px;text-align:center">지역</th>
         <th>기간</th>
       </tr></thead>
       <tbody id="ltbody"></tbody>
@@ -352,10 +352,10 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
     <table class="rec-tbl">
       <thead><tr>
         <th>공연명</th>
-        <th style="width:84px">상태</th>
-        <th>기간</th>
-        <th style="width:60px">관람</th>
-        <th>관람일</th>
+        <th style="width:84px;text-align:center">상태</th>
+        <th style="text-align:center">기간</th>
+        <th style="width:60px;text-align:center">관람</th>
+        <th style="text-align:center">관람일</th>
         <th style="width:110px"></th>
       </tr></thead>
       <tbody id="rec-tbody"></tbody>
@@ -469,7 +469,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v37';const APP_DATE='2026.06.10';
+const APP_VER='v38';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
