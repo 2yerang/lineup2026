@@ -464,7 +464,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v34';const APP_DATE='2026.06.10';
+const APP_VER='v35';const APP_DATE='2026.06.10';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -487,8 +487,8 @@ function dl(s){const e=pi(s.end);return e?Math.ceil((e-today)/86400000):9999;}
 function es(s){return gst(s)==='ongoing'&&dl(s)<=14;}
 function bc(s){const t=gst(s);if(t==='ended')return'#424258';const v=sc(s.name);if(t==='ongoing')return v;const[r,g,b]=h2r(v);return`rgb(${Math.round(r+(255-r)*.52)},${Math.round(g+(255-g)*.52)},${Math.round(b+(255-b)*.52)})`;}
 function btc(s){const t=gst(s);if(t==='ended')return'rgba(255,255,255,.45)';if(t==='upcoming')return'rgba(20,20,40,.75)';return'rgba(255,255,255,.92)';}
-function cn(n){return n.replace(/\s*\([^)]*\)/g,'').replace(/\s+/g,' ').trim();}
-function nd(n){return n.replace(/\s*\[[^\]]*\]\s*/g,'').replace(/\s+/g,' ').trim();}
+function cn(n){return _keepVenue&&_keepVenue.has(n)?n:n.replace(/\s*\([^)]*\)/g,'').replace(/\s+/g,' ').trim();}
+function nd(n){return _keepName&&_keepName.has(n)?n:n.replace(/\s*\[[^\]]*\]\s*/g,'').replace(/\s+/g,' ').trim();}
 function vd(f,h){const cf=cn(f),ch=cn(h);return cf===ch?ch:cf+' '+ch;}
 function sk(s){return s.name+'\x00'+s.facility+'\x00'+s.hall;}
 function pi(s){if(!s||s.length<10)return null;const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
@@ -499,6 +499,21 @@ function dur(s){const a=pi(s.start),b=pi(s.end);return a&&b?Math.round((b-a)/864
 
 const SHOWS=SHOWS_RAW.map(r=>({name:r[0],start:r[1],end:r[2],facility:r[3],hall:r[4],region:r[5]}));
 const SM={};SHOWS.forEach(s=>{SM[sk(s)]=s;});
+const _keepVenue=new Set(),_keepName=new Set();
+(()=>{
+  const fg=new Map(),hg=new Map(),ng=new Map();
+  SHOWS.forEach(s=>{
+    const fb=s.facility.replace(/\s*\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
+    const hb=s.hall.replace(/\s*\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
+    const nb=s.name.replace(/\s*\[[^\]]*\]\s*/g,'').replace(/\s+/g,' ').trim();
+    if(!fg.has(fb))fg.set(fb,new Set());fg.get(fb).add(s.facility);
+    if(!hg.has(hb))hg.set(hb,new Set());hg.get(hb).add(s.hall);
+    if(!ng.has(nb))ng.set(nb,new Set());ng.get(nb).add(s.name);
+  });
+  fg.forEach(v=>{if(v.size>1)v.forEach(x=>_keepVenue.add(x));});
+  hg.forEach(v=>{if(v.size>1)v.forEach(x=>_keepVenue.add(x));});
+  ng.forEach(v=>{if(v.size>1)v.forEach(x=>_keepName.add(x));});
+})();
 
 // Storage
 const VK='lineup2026_viewed',RK='lineup2026_records',NK='lineup2026_nick';
