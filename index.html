@@ -258,7 +258,11 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 /* Calendar */
 #tab-cal{display:flex;flex-direction:column;}
 #cal-wrap{flex:1;overflow-y:auto;padding:12px 10px 80px;-webkit-overflow-scrolling:touch;}
-#cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px;}
+#cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:0 2px;}
+#cal-stats{font-size:12px;color:var(--text2);margin-bottom:8px;padding:0 2px;}
+#cal-today-btn{background:var(--bg3);border:1px solid var(--border);color:var(--today);padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+#cal-today-btn:active{opacity:.7;}
+#cal-today-btn.hidden{display:none;}
 #cal-ym{font-size:16px;font-weight:700;color:var(--text1);cursor:pointer;padding:4px 10px;border-radius:8px;position:relative;}
 #cal-ym:hover{background:var(--border);}
 #cal-ym-picker{display:none;position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:10px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.6);min-width:220px;}
@@ -473,7 +477,9 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
         </div>
       </div>
       <button class="cal-nav-btn" id="cal-next">▶</button>
+      <button id="cal-today-btn">오늘</button>
     </div>
+    <div id="cal-stats"></div>
     <div class="cal-grid" id="cal-grid">
       <div class="cal-dow sun">일</div>
       <div class="cal-dow">월</div>
@@ -1133,9 +1139,25 @@ function renderCal(){
     cell.appendChild(dn);grid.appendChild(cell);
   }
 
-  // badge
-  const monthRecs=Object.keys(dateMap).filter(d=>d.startsWith(ym));
-  cbadge.textContent=monthRecs.length?monthRecs.length+'일 관람':'';
+  // 오늘 버튼: 현재 달이 아닐 때만 표시
+  const isThisMonth=(calYear===today.getFullYear()&&calMonth===today.getMonth());
+  document.getElementById('cal-today-btn').classList.toggle('hidden',isThisMonth);
+
+  // 월 통계
+  const monthDates=Object.keys(dateMap).filter(d=>d.startsWith(ym));
+  const totalViews=monthDates.reduce((t,d)=>t+dateMap[d].filter(r=>!r.e.gift).length,0);
+  const totalShows=new Set(monthDates.flatMap(d=>dateMap[d].filter(r=>!r.e.gift).map(r=>r.s.name))).size;
+  const giftViews=monthDates.reduce((t,d)=>t+dateMap[d].filter(r=>r.e.gift).length,0);
+  let statsText='';
+  if(totalViews||giftViews){
+    const parts=[];
+    if(totalViews)parts.push(totalViews+'회 관람');
+    if(totalShows>1||totalViews>0)parts.push(totalShows+'개 공연');
+    if(giftViews)parts.push('나눔 '+giftViews+'회');
+    statsText=parts.join(' · ');
+  }
+  document.getElementById('cal-stats').textContent=statsText;
+  cbadge.textContent=monthDates.length?monthDates.length+'일 관람':'';
 }
 
 function openCalDetail(iso,recs){
@@ -1161,6 +1183,9 @@ document.getElementById('cal-prev').addEventListener('click',()=>{
 });
 document.getElementById('cal-next').addEventListener('click',()=>{
   calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();
+});
+document.getElementById('cal-today-btn').addEventListener('click',()=>{
+  calYear=today.getFullYear();calMonth=today.getMonth();renderCal();
 });
 document.getElementById('cal-det-cls').addEventListener('click',()=>document.getElementById('cal-detail').classList.remove('open'));
 
