@@ -259,7 +259,19 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 #tab-cal{display:flex;flex-direction:column;}
 #cal-wrap{flex:1;overflow-y:auto;padding:12px 10px 80px;-webkit-overflow-scrolling:touch;}
 #cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px;}
-#cal-ym{font-size:16px;font-weight:700;color:var(--text1);}
+#cal-ym{font-size:16px;font-weight:700;color:var(--text1);cursor:pointer;padding:4px 10px;border-radius:8px;position:relative;}
+#cal-ym:hover{background:var(--border);}
+#cal-ym-picker{display:none;position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:10px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.6);min-width:220px;}
+#cal-ym-picker.open{display:block;}
+.cal-picker-year{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.cal-picker-yr-btn{background:none;border:none;color:var(--text1);font-size:16px;cursor:pointer;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.cal-picker-yr-btn:hover{background:var(--border);}
+#cal-picker-yr{font-size:14px;font-weight:700;color:var(--text1);}
+.cal-picker-months{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
+.cal-picker-m{background:none;border:1px solid transparent;color:var(--text2);padding:6px 0;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;text-align:center;}
+.cal-picker-m:hover{background:var(--border);color:var(--text1);}
+.cal-picker-m.cur{background:var(--accent);color:#fff;border-color:var(--accent);}
+#cal-ym-wrap{position:relative;}
 .cal-nav-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text1);width:34px;height:34px;border-radius:8px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .cal-nav-btn:hover{background:var(--border);}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
@@ -449,7 +461,17 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
   <div id="cal-wrap">
     <div id="cal-header">
       <button class="cal-nav-btn" id="cal-prev">◀</button>
-      <span id="cal-ym"></span>
+      <div id="cal-ym-wrap">
+        <span id="cal-ym"></span>
+        <div id="cal-ym-picker">
+          <div class="cal-picker-year">
+            <button class="cal-picker-yr-btn" id="cal-yr-prev">◀</button>
+            <span id="cal-picker-yr"></span>
+            <button class="cal-picker-yr-btn" id="cal-yr-next">▶</button>
+          </div>
+          <div class="cal-picker-months" id="cal-picker-months"></div>
+        </div>
+      </div>
       <button class="cal-nav-btn" id="cal-next">▶</button>
     </div>
     <div class="cal-grid" id="cal-grid">
@@ -1091,7 +1113,7 @@ function renderCal(){
     recs.slice(0,maxShow).forEach(({s,e})=>{
       const item=document.createElement('div');item.className='cal-rec-item';
       const dot=document.createElement('span');dot.className='cal-rec-dot';dot.style.background=bc(s);
-      const nm=document.createElement('span');nm.textContent=(e.gift?'나눔 ':'')+nd(s.name);
+      const nm=document.createElement('span');nm.textContent=(e.gift?'[나눔]':'')+nd(s.name);
       item.appendChild(dot);item.appendChild(nm);cell.appendChild(item);
     });
     if(recs.length>maxShow){
@@ -1141,6 +1163,28 @@ document.getElementById('cal-next').addEventListener('click',()=>{
   calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();
 });
 document.getElementById('cal-det-cls').addEventListener('click',()=>document.getElementById('cal-detail').classList.remove('open'));
+
+// Month picker
+let pickerYear=calYear;
+function renderPicker(){
+  document.getElementById('cal-picker-yr').textContent=pickerYear+'년';
+  const mc=document.getElementById('cal-picker-months');mc.innerHTML='';
+  for(let m=1;m<=12;m++){
+    const btn=document.createElement('button');btn.className='cal-picker-m'+(pickerYear===calYear&&m-1===calMonth?' cur':'');
+    btn.textContent=m+'월';
+    btn.addEventListener('click',e=>{e.stopPropagation();calYear=pickerYear;calMonth=m-1;document.getElementById('cal-ym-picker').classList.remove('open');renderCal();});
+    mc.appendChild(btn);
+  }
+}
+document.getElementById('cal-ym').addEventListener('click',e=>{
+  e.stopPropagation();
+  pickerYear=calYear;
+  renderPicker();
+  document.getElementById('cal-ym-picker').classList.toggle('open');
+});
+document.getElementById('cal-yr-prev').addEventListener('click',e=>{e.stopPropagation();pickerYear--;renderPicker();});
+document.getElementById('cal-yr-next').addEventListener('click',e=>{e.stopPropagation();pickerYear++;renderPicker();});
+document.addEventListener('click',()=>document.getElementById('cal-ym-picker').classList.remove('open'));
 
 // Tabs
 document.querySelectorAll('.tab-btn').forEach(btn=>{
