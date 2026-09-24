@@ -543,6 +543,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
       <label class="afl">티켓 사진 (선택)</label>
       <div class="pzone" id="pzone">📷 사진 선택 또는 촬영</div>
       <input type="file" id="arfile" accept="image/*">
+      <input type="file" id="apfile" accept="image/*" style="display:none">
       <img id="arpreview" alt="미리보기">
     </div>
     <div class="arbtns"><button id="arcancel">취소</button><button id="arsave">저장</button></div>
@@ -565,7 +566,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v45';const APP_DATE='2026.09.24';
+const APP_VER='v46';const APP_DATE='2026.09.24';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -664,6 +665,19 @@ async function loadPhoto(id){
   const db=await getPhotoDB();
   return new Promise((res,rej)=>{const tx=db.transaction('photos','readonly');const req=tx.objectStore('photos').get(id);req.onsuccess=e=>res(e.target.result||null);req.onerror=rej;});
 }
+let _apTarget=null;
+function attachPhoto(s,e){_apTarget={s,id:e.id};const f=document.getElementById('apfile');f.value='';f.click();}
+document.getElementById('apfile').addEventListener('change',async function(){
+  const f=this.files[0];if(!f||!_apTarget)return;
+  const {s,id}=_apTarget;_apTarget=null;
+  const r=gr(),ent=(r[sk(s)]||[]).find(x=>x.id===id);if(!ent)return;
+  await savePhoto(id,f);
+  ent.photo={ext:photoExt(f)};sr(r);
+  this.value='';
+  if(curTab==='record')renderRecord();
+  if(curTab==='cal')renderCal();
+  if(ov.classList.contains('open')&&curShow&&sk(curShow)===sk(s))updModal(s);
+});
 async function deletePhoto(id){
   const db=await getPhotoDB();
   return new Promise((res,rej)=>{const tx=db.transaction('photos','readwrite');tx.objectStore('photos').delete(id);tx.oncomplete=res;tx.onerror=rej;});
@@ -924,6 +938,7 @@ function renderRecord(){
       const row=document.createElement('div');row.className='rentry';
       row.innerHTML=`<span class="edate">${fd(e.date)}${TYPE_BADGE[e.type]||''}${e.photo?' 📷':''}</span>`;
       if(e.photo){const pb=document.createElement('button');pb.className='ephoto';pb.title='사진 보기';pb.textContent='🖼';pb.addEventListener('click',()=>showPhoto(e.id));row.appendChild(pb);}
+      else{const ab=document.createElement('button');ab.className='ephoto';ab.title='사진 추가';ab.textContent='📷+';ab.addEventListener('click',()=>attachPhoto(s,e));row.appendChild(ab);}
       const db=document.createElement('button');db.className='edel';db.title='삭제';db.textContent='✕';
       db.addEventListener('click',()=>{if(!confirm('이 관람 기록을 삭제하시겠습니까?'))return;delRec(s,e.id);updECnt();renderRecord();if(ov.classList.contains('open')&&curShow&&sk(curShow)===sk(s))updModal(s);});
       row.appendChild(db);inner.appendChild(row);
@@ -957,6 +972,7 @@ function updModal(s){
     const ct=document.createElement('span');
     ct.innerHTML=(e.photo?'📷 ':'')+fd(e.date)+(TYPE_BADGE[e.type]||'');
     if(e.photo)ct.addEventListener('click',()=>showPhoto(e.id));
+    else{const ab=document.createElement('button');ab.className='mrec-del';ab.title='사진 추가';ab.textContent='📷+';ab.addEventListener('click',ev=>{ev.stopPropagation();attachPhoto(s,e);});p.appendChild(ab);}
     const del=document.createElement('button');del.className='mrec-del';del.textContent='×';
     del.addEventListener('click',ev=>{
       ev.stopPropagation();
@@ -966,7 +982,7 @@ function updModal(s){
       if(curTab==='record')renderRecord();
       if(curTab==='cal')renderCal();
     });
-    p.appendChild(ct);p.appendChild(del);
+    p.insertBefore(ct,p.firstChild);p.appendChild(del);
     wrap.appendChild(p);
   });
 }
