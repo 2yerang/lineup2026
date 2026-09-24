@@ -566,7 +566,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v46';const APP_DATE='2026.09.24';
+const APP_VER='v47';const APP_DATE='2026.09.24';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -1324,6 +1324,7 @@ document.getElementById('st-update').addEventListener('click',async()=>{
     if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update();}
   }catch(e){}
   msg.style.display='';msg.textContent='최신 버전을 불러오는 중입니다...';
+  try{sessionStorage.setItem('lineup2026_restore_tab',curTab);}catch(e){}
   setTimeout(()=>location.reload(),400);
 });
 document.getElementById('st-nick-save').addEventListener('click',()=>{
@@ -1393,6 +1394,10 @@ document.getElementById('qr').addEventListener('input',renderRecord);
 
 // Init
 migrateRecordTypes();buildHdr();buildZoomMenu();render();updateZoom();updECnt();
+try{
+  const rt=sessionStorage.getItem('lineup2026_restore_tab');
+  if(rt){sessionStorage.removeItem('lineup2026_restore_tab');const b=document.querySelector(`.tab-btn[data-tab="${rt}"]`);if(b)b.click();}
+}catch(e){}
 
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 </script>
