@@ -565,7 +565,7 @@ body{font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;backgro
 <script src="data/shows.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" crossorigin="anonymous"></script>
 <script>
-const APP_VER='v44';const APP_DATE='2026.09.24';
+const APP_VER='v45';const APP_DATE='2026.09.24';
 const MONTH_DAYS=[31,31,28,31,30,31,30,31,31,30,31,30,31]; // 25.12 + 26.01~12
 const MONTH_NAMES=['25.12월','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const TOTAL_DAYS=MONTH_DAYS.reduce((a,b)=>a+b,0);
@@ -1053,6 +1053,22 @@ async function showPhoto(id){
 document.getElementById('pcls').addEventListener('click',()=>document.getElementById('po').classList.remove('open'));
 document.getElementById('po').addEventListener('click',e=>{if(e.target===document.getElementById('po'))document.getElementById('po').classList.remove('open');});
 
+// 파일 저장: iOS PWA(standalone)에서는 <a download>가 거의 항상 무시되므로
+// Web Share API(공유 시트)를 우선 사용하고, 지원 안 하면 기존 다운로드로 폴백한다.
+async function shareOrDownload(blob,filename){
+  try{
+    const file=new File([blob],filename,{type:blob.type});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+      return;
+    }
+  }catch(e){if(e&&e.name==='AbortError')return;}
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // CSV / ZIP
 document.getElementById('rstat-f').addEventListener('change',()=>renderRecord());
 document.getElementById('rphoto-f').addEventListener('click',()=>{
@@ -1063,7 +1079,7 @@ document.getElementById('rphoto-f').addEventListener('click',()=>{
   btn.dataset.photo=next;btn.textContent=label[next];
   renderRecord();
 });
-document.getElementById('csv-btn').addEventListener('click',()=>{
+document.getElementById('csv-btn').addEventListener('click',async()=>{
   const groups=buildShowGroups();
   if(!groups.length){alert('저장된 관람 기록이 없습니다.');return;}
   const photoG=groups.filter(g=>g.entries.some(e=>e.photo));
@@ -1083,7 +1099,8 @@ document.getElementById('csv-btn').addEventListener('click',()=>{
     rows.push([i+1,g.s.name,g.repDate,fname,cnt]);
   });
   const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`${getNick()}_관람기록.csv`;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  await shareOrDownload(blob,`${getNick()}_관람기록.csv`);
 });
 document.getElementById('zip-btn').addEventListener('click',async()=>{
   if(typeof JSZip==='undefined'){alert('ZIP 라이브러리를 불러오지 못했습니다. 온라인 상태에서 다시 시도해주세요.');return;}
@@ -1093,7 +1110,8 @@ document.getElementById('zip-btn').addEventListener('click',async()=>{
   const zip=new JSZip();
   const entries=photoG.map((g,gi)=>{const fe=g.entries.filter(e=>e.photo)[0];return{id:fe.id,name:`${getNick()}_${String(gi+1).padStart(3,'0')}_${g.code}.${fe.photo.ext||'jpg'}`};});
   for(const pe of entries){const blob=await loadPhoto(pe.id);if(blob)zip.file(pe.name,blob);}
-  const blob=await zip.generateAsync({type:'blob'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${getNick()}_티켓사진.zip`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  const blob=await zip.generateAsync({type:'blob',mimeType:'application/zip'});
+  await shareOrDownload(blob,`${getNick()}_티켓사진.zip`);
 });
 
 // Calendar
@@ -1297,12 +1315,11 @@ document.getElementById('st-nick-save').addEventListener('click',()=>{
   setNick(v);
   alert(`닉네임이 '${v||'닉네임'}'(으)로 설정되었습니다.`);
 });
-document.getElementById('st-export').addEventListener('click',()=>{
+document.getElementById('st-export').addEventListener('click',async()=>{
   const data={version:'1',exportedAt:TI,viewed:gv(),records:gr(),fav_venues:[...getFavs()],wishlist:[...getWish()]};
   const json=JSON.stringify(data,null,2);
-  const a=document.createElement('a');
-  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(json);
-  a.download=`${getNick()}_관람데이터_${TI}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+  await shareOrDownload(blob,`${getNick()}_관람데이터_${TI}.json`);
 });
 document.getElementById('st-import').addEventListener('click',()=>document.getElementById('st-import-file').click());
 document.getElementById('st-import-file').addEventListener('change',function(){
